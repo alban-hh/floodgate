@@ -101,7 +101,8 @@ static __always_inline int procezo_paketen(void *data, void *data_end, __u32 ip_
         limit = cfg->limit_tcp;
         idx_stat = 0;
         if (cfg->bloko_tcp) {
-            stat = bpf_map_lookup_elem(&harta_statistika, &idx_stat);
+            __u32 drop_idx = 3;
+            stat = bpf_map_lookup_elem(&harta_statistika, &drop_idx);
             if (stat)
                 __sync_fetch_and_add(stat, 1);
             return XDP_DROP;
@@ -110,7 +111,8 @@ static __always_inline int procezo_paketen(void *data, void *data_end, __u32 ip_
         limit = cfg->limit_udp;
         idx_stat = 1;
         if (cfg->bloko_udp) {
-            stat = bpf_map_lookup_elem(&harta_statistika, &idx_stat);
+            __u32 drop_idx = 4;
+            stat = bpf_map_lookup_elem(&harta_statistika, &drop_idx);
             if (stat)
                 __sync_fetch_and_add(stat, 1);
             return XDP_DROP;
