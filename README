@@ -1,0 +1,54 @@
+floodgate
+
+xdp traffic scrubber per ddos mitigation
+
+ne testing
+
+vetem testuar lokalisht
+nuk eshte testuar ne production
+
+setup
+-----
+apt-get install clang-12 llc-12 libbpf-dev libelf-dev
+make
+
+perdorimi
+---------
+bloko udp ne port 53
+./floodgate -i vlan50 -p 53 -U
+
+rate limit tcp 100k paketa/sek
+./floodgate -i vlan50 -t 100000
+
+shfaq stats
+./floodgate -i vlan50 -s 5
+
+verifiko
+--------
+bpftool net show
+bpftool map dump name harta_ip
+bpftool prog show
+
+requirements
+------------
+kernel 5.4+
+clang 12+
+libbpf 1.x
+
+struktura
+---------
+harta_ip - hash map per ip tracking
+harta_config - konfigurimi
+harta_statistika - stats
+
+variablat
+---------
+ip_burimi - source ip
+porta_dest - destination port
+protokoll - tcp/udp/icmp
+numrues_paketa - packet counter
+koha_fundit - last timestamp
+limit_tcp/udp - rate limits
+bloko_tcp/udp - block all
+
+integrimi me fastnetmon vjen shpejt
