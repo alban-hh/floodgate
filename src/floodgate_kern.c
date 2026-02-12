@@ -49,12 +49,24 @@ struct {
     __uint(max_entries, 10);
 } harta_statistika SEC(".maps");
 
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, __u32);
+    __type(value, __u8);
+    __uint(max_entries, 10000);
+} harta_whitelist SEC(".maps");
+
 static __always_inline int procezo_paketen(void *data, void *data_end, __u32 ip_burimi, __u8 protokoll, __u16 porta_dest) {
     struct rregull_trafikut *rregull;
     struct konfigurimi *cfg;
     __u32 celes = 0;
     __u64 koha_tani = bpf_ktime_get_ns();
     __u64 *stat;
+    __u8 *whitelisted;
+
+    whitelisted = bpf_map_lookup_elem(&harta_whitelist, &ip_burimi);
+    if (whitelisted)
+        return XDP_PASS;
 
     cfg = bpf_map_lookup_elem(&harta_config, &celes);
     if (!cfg || !cfg->aktiv)

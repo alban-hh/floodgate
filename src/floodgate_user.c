@@ -24,6 +24,7 @@ struct konfigurimi {
 static int fd_harta_config = -1;
 static int fd_harta_stat = -1;
 static int fd_harta_ip = -1;
+static int fd_harta_whitelist = -1;
 static int ifindex = -1;
 static struct bpf_object *obj = NULL;
 
@@ -80,6 +81,40 @@ static void vendos_konfig(struct konfigurimi *cfg) {
     }
 }
 
+static int ngarko_whitelist(const char *fajlli) {
+    FILE *fp = fopen(fajlli, "r");
+    if (!fp) {
+        fprintf(stderr, "Gabim ne hapjen e whitelist: %s\n", strerror(errno));
+        return -1;
+    }
+
+    char line[128];
+    int numri = 0;
+    __u8 vlera = 1;
+
+    while (fgets(line, sizeof(line), fp)) {
+        struct in_addr addr;
+        line[strcspn(line, "\n")] = 0;
+
+        if (strlen(line) == 0 || line[0] == '#')
+            continue;
+
+        if (inet_pton(AF_INET, line, &addr) != 1) {
+            fprintf(stderr, "IP invalid: %s\n", line);
+            continue;
+        }
+
+        __u32 ip = addr.s_addr;
+        if (bpf_map_update_elem(fd_harta_whitelist, &ip, &vlera, BPF_ANY) == 0) {
+            numri++;
+        }
+    }
+
+    fclose(fp);
+    printf("Whitelist: %d IP te ngarkuara\n", numri);
+    return numri;
+}
+
 static void shfaq_perdorimi(const char *programi) {
     printf("FloodGate - XDP Traffic Scrubber\n\n");
     printf("Perdorimi: %s -i <interface> [opsionet]\n\n", programi);
@@ -91,6 +126,7 @@ static void shfaq_perdorimi(const char *programi) {
     printf("  -c <limit>        ICMP limit (paketa/sek)\n");
     printf("  -U                Bloko te gjitha UDP\n");
     printf("  -T                Bloko te gjitha TCP\n");
+    printf("  -w <file>         Whitelist IPs (file me IP per rresht)\n");
     printf("  -s <sec>          Shfaq statistika cdo X sekonda\n");
     printf("  -h                Shfaq kete ndihme\n\n");
     printf("Shembull:\n");
@@ -112,10 +148,11 @@ int main(int argc, char **argv) {
         .aktiv = 1
     };
     int intervali_stat = 0;
+    char *whitelist_fajlli = NULL;
 
     libbpf_set_print(print_libbpf_log);
 
-    while ((opt = getopt(argc, argv, "i:p:t:u:c:UTs:h")) != -1) {
+    while ((opt = getopt(argc, argv, "i:p:t:u:c:w:UTs:h")) != -1) {
         switch (opt) {
             case 'i':
                 interface = optarg;
@@ -137,6 +174,9 @@ int main(int argc, char **argv) {
                 break;
             case 'T':
                 cfg.bloko_tcp = 1;
+                break;
+            case 'w':
+                whitelist_fajlli = optarg;
                 break;
             case 's':
                 intervali_stat = atoi(optarg);
@@ -193,13 +233,20 @@ int main(int argc, char **argv) {
     fd_harta_config = bpf_object__find_map_fd_by_name(obj, "harta_config");
     fd_harta_stat = bpf_object__find_map_fd_by_name(obj, "harta_statistika");
     fd_harta_ip = bpf_object__find_map_fd_by_name(obj, "harta_ip");
+    fd_harta_whitelist = bpf_object__find_map_fd_by_name(obj, "harta_whitelist");
 
-    if (fd_harta_config < 0 || fd_harta_stat < 0 || fd_harta_ip < 0) {
+    if (fd_harta_config < 0 || fd_harta_stat < 0 || fd_harta_ip < 0 || fd_harta_whitelist < 0) {
         fprintf(stderr, "Gabim ne gjetjen e maps\n");
         return 1;
     }
 
     vendos_konfig(&cfg);
+
+    if (whitelist_fajlli) {
+        if (ngarko_whitelist(whitelist_fajlli) < 0) {
+            return 1;
+        }
+    }
 
     signal(SIGINT, pastrimi);
     signal(SIGTERM, pastrimi);

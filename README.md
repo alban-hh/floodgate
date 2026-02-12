@@ -33,6 +33,9 @@ make
 # run - bloko udp flood ne dns
 ./floodgate -i vlan50 -p 53 -U
 
+# me whitelist - internal ips nuk bllokohen
+./floodgate -i vlan50 -p 53 -U -w whitelist.txt
+
 # monitor live
 ./floodgate -i vlan50 -s 5
 ```
@@ -46,6 +49,7 @@ make
 | dns amplification | `./floodgate -i vlan50 -p 53 -U` |
 | syn flood | `./floodgate -i vlan50 -t 100000` |
 | ntp amplification | `./floodgate -i vlan50 -p 123 -U` |
+| me whitelist | `./floodgate -i vlan50 -U -w whitelist.txt` |
 | monitor only | `./floodgate -i vlan50 -s 5` |
 
 ---
@@ -72,11 +76,13 @@ clean traffic kthehet ne cisco
 - `harta_ip` - hash 10m entries per ip tracking
 - `harta_config` - runtime configuration
 - `harta_statistika` - zero-lock stats
+- `harta_whitelist` - 10k whitelisted ips
 
 **filtering**
 - rate limiting per protocol
 - selective tcp/udp/icmp blocking
 - per-port granular control
+- whitelist support - internal ips skip filtering
 
 ---
 
