@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <net/if.h>
 #include <linux/if_link.h>
+#include <bpf/netlink.h>
 #include <stdarg.h>
 
 static pthread_t sflow_thread;
