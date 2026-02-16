@@ -1,6 +1,6 @@
-# FloodGate Network Scheme
+# Skema e Rrjetit FloodGate
 
-## Topology
+## Topologjia
 
 ```
                           INTERNET
@@ -21,8 +21,8 @@
                     │                 │
                     │  Be1.10: 10.10.10.2
                     │  Be1.20: 10.10.20.2
-                    │  Be1.30: 192.168.10.1/24  ◄── protected network
-                    │  Be1.40: 192.168.1.1/24   ◄── management / sFlow
+                    │  Be1.30: 192.168.10.1/24  ◄── rrjeti i mbrojtur
+                    │  Be1.40: 192.168.1.1/24   ◄── menaxhim / sFlow
                     │  Be1.50: 192.168.50.1/24  ◄── scrubbing
                     └────────┬────────┘
                              │
@@ -41,58 +41,58 @@
           │   FloodGate    │  │   │
           │    Server      │  │   │
           │                │  │   │
-          │  vlan40: 192.168.1.101/24   (sFlow + management)
-          │  vlan50: 192.168.50.101/24  (scrubbing interface)
+          │  vlan40: 192.168.1.101/24   (sFlow + menaxhim)
+          │  vlan50: 192.168.50.101/24  (interface scrubbing)
           └────────────────┘  │   │
                               ▼   ▼
                      ┌─────────────────┐
-                     │ Protected       │
-                     │ Servers         │
+                     │ Serverat e      │
+                     │ Mbrojtur        │
                      │ 192.168.10.0/24 │
                      │                 │
-                     │ e.g. 192.168.10.102 (attacked IP)
+                     │ p.sh. 192.168.10.102 (IP e sulmuar)
                      └─────────────────┘
 ```
 
-## Normal Traffic Flow (no attack)
+## Rrjedha normale e trafikut (pa sulm)
 
 ```
-Client ──► Mikrotik ──► ASR 9001 ──► Nexus 3k ──► vlan30 ──► 192.168.10.102
-                                                                    │
-Client ◄── Mikrotik ◄── ASR 9001 ◄── Nexus 3k ◄── vlan30 ◄────────┘
+Klienti ──► Mikrotik ──► ASR 9001 ──► Nexus 3k ──► vlan30 ──► 192.168.10.102
+                                                                      │
+Klienti ◄── Mikrotik ◄── ASR 9001 ◄── Nexus 3k ◄── vlan30 ◄─────────┘
 
-FloodGate is idle. Only sFlow telemetry arrives on vlan40.
+FloodGate eshte ne pritje. Vetem telemetria sFlow arrin ne vlan40.
 ```
 
-## sFlow Monitoring (always active)
+## Monitorimi sFlow (gjithmone aktiv)
 
 ```
 ASR 9001 ──── sFlow UDP 6343 ────► Nexus 3k ──► vlan40 ──► FloodGate
                                                             192.168.1.101:6343
 
-ASR samples 1 in every 512 packets and sends the packet header
-to FloodGate. This is monitoring only - does NOT affect traffic.
-FloodGate uses this data to detect attack patterns proactively.
+ASR samplon 1 nga cdo 512 paketa dhe dergon headerin e paketes
+ne FloodGate. Kjo eshte vetem monitoring - NUK ndikon trafikun.
+FloodGate e perdor kete per te detektuar sulme proaktivisht.
 ```
 
-## Attack Scenario - Step by Step
+## Skenari i sulmit - hap pas hapi
 
-### Step 1: Attack starts
+### Hapi 1: Sulmi fillon
 
 ```
-Attacker(s) ──50Gbps──► Mikrotik ──► ASR 9001 ──► Nexus 3k ──► 192.168.10.102
-                                                                    OVERLOADED!
+Sulmues(it) ──50Gbps──► Mikrotik ──► ASR 9001 ──► Nexus 3k ──► 192.168.10.102
+                                                                     MBYTET!
 ```
 
-### Step 2: ASR diverts attacked IP to scrubber
+### Hapi 2: ASR devijion IP-ne e sulmuar ne scrubber
 
-Network engineer adds a static route on ASR 9001:
+Network engineer shton nje static route ne ASR 9001:
 
 ```
 ip route 192.168.10.102/32 192.168.50.101
 ```
 
-Now ALL traffic for 192.168.10.102 goes through FloodGate:
+Tani I GJITHE trafiku per 192.168.10.102 kalon neper FloodGate:
 
 ```
                                     ASR 9001
@@ -103,100 +103,100 @@ Now ALL traffic for 192.168.10.102 goes through FloodGate:
                      (scrub)        (sFlow)        (normal)
                         │              │              │
                         ▼              ▼              ▼
-                  ┌──────────┐   ┌──────────┐   Other servers
-                  │FloodGate │   │FloodGate │   (not attacked)
-                  │  vlan50  │   │  vlan40  │   get traffic
-                  │  SCRUB   │   │  MONITOR │   directly
+                  ┌──────────┐   ┌──────────┐   Serverat e tjere
+                  │FloodGate │   │FloodGate │   (qe nuk sulmohen)
+                  │  vlan50  │   │  vlan40  │   marrin trafik
+                  │  SCRUB   │   │  MONITOR │   direkt
                   └──────────┘   └──────────┘
 ```
 
-### Step 3: FloodGate scrubs on vlan50
+### Hapi 3: FloodGate pastron ne vlan50
 
 ```
-Attacker 45.67.89.10 ──────┐
-Attacker 91.23.45.67 ──────┤
-Attacker 103.44.55.66 ─────┤
-Legit client 8.8.4.4 ──────┤
+Sulmues 45.67.89.10 ──────┐
+Sulmues 91.23.45.67 ──────┤
+Sulmues 103.44.55.66 ─────┤
+Klient legjitim 8.8.4.4 ──┤
                             ▼
                     ┌───────────────────────────────────┐
-                    │  FloodGate XDP on vlan50          │
+                    │  FloodGate XDP ne vlan50           │
                     │                                   │
                     │  45.67.89.10   → 250K pps → DROP  │
                     │  91.23.45.67   → 180K pps → DROP  │
                     │  103.44.55.66  → 90K pps  → DROP  │
-                    │  8.8.4.4       → 50 pps   → PASS  │
+                    │  8.8.4.4       → 50 pps   → LEJO  │
                     │                                   │
-                    │  XDP pipeline per packet:         │
-                    │  1. Blacklist check  → DROP        │
-                    │  2. Whitelist check  → PASS        │
-                    │  3. Rate limit check → DROP/PASS   │
-                    │  4. Escalate threat level          │
+                    │  XDP pipeline per cdo paket:      │
+                    │  1. Kontrollo blacklist  → DROP    │
+                    │  2. Kontrollo whitelist  → LEJO    │
+                    │  3. Kontrollo rate limit → DROP/LEJO│
+                    │  4. Eskalo nivelin e kercenimit    │
                     └──────────────┬────────────────────┘
                                    │
-                              clean traffic
+                            trafik i paster
                                    │
                                    ▼
                            192.168.10.102
-                           (receives only
-                            legitimate traffic)
+                           (merr vetem trafik
+                            legjitim)
 ```
 
-### Step 4: sFlow auto-detection (parallel)
+### Hapi 4: sFlow auto-detektimi (paralel)
 
 ```
-While XDP scrubs on vlan50, sFlow collector on vlan40
-detects the same attackers from the router's perspective:
+Nderkohe qe XDP pastron ne vlan50, sFlow collector ne vlan40
+detekton te njejtet sulmues nga perspektiva e routerit:
 
-sFlow data shows:
-  45.67.89.10   → 250,000 pps  → EXCEEDS 100K threshold → AUTO BLACKLIST
-  91.23.45.67   → 180,000 pps  → EXCEEDS 100K threshold → AUTO BLACKLIST
+Te dhenat sFlow tregojne:
+  45.67.89.10   → 250,000 pps  → KALON PRAGUN 100K → AUTO BLACKLIST
+  91.23.45.67   → 180,000 pps  → KALON PRAGUN 100K → AUTO BLACKLIST
 
-Once blacklisted, XDP drops ALL packets from these IPs
-instantly without even checking rate limits. Wire speed drop.
+Pasi te futen ne blacklist, XDP dropon TE GJITHA paketat nga keto IP
+menjehere pa kontrolluar as rate limitet. Drop ne wire speed.
 ```
 
-### Step 5: Attack stops
+### Hapi 5: Sulmi ndalon
 
 ```
-After 5 minutes with no traffic from blocked IPs:
-  FloodGate removes them from blacklist automatically.
-  Threat levels decay back to NORMAL.
+Pas 5 minutash pa trafik nga IP-te e bllokuara:
+  FloodGate i heq nga blacklist automatikisht.
+  Nivelet e kercenimit bien ne NORMAL.
 
-Network engineer removes the static route on ASR:
+Network engineer heq static route nga ASR:
   no ip route 192.168.10.102/32 192.168.50.101
 
-Traffic for 192.168.10.102 goes directly again:
+Trafiku per 192.168.10.102 shkon direkt perseri:
   ASR 9001 ──► Nexus 3k ──► vlan30 ──► 192.168.10.102
 ```
 
-## What Each Device Does
+## Cfare ben cdo pajisje
 
-### ASR 9001 (network engineer configures)
+### ASR 9001 (konfigurohet nga network engineer)
 
-| Task | Configuration |
-|------|--------------|
-| Send sFlow to FloodGate | `sflow collector-ip 192.168.1.101 vrf default` + `sflow collector-port 6343` |
-| Divert attacked IP to scrubber | `ip route <attacked-ip>/32 192.168.50.101` |
-| Remove diversion after attack | `no ip route <attacked-ip>/32 192.168.50.101` |
+| Detyra | Konfigurimi |
+|--------|------------|
+| Dergo sFlow ne FloodGate | `sflow collector-ip 192.168.1.101 vrf default` + `sflow collector-port 6343` |
+| Devijo IP e sulmuar ne scrubber | `ip route <ip-e-sulmuar>/32 192.168.50.101` |
+| Hiq devijimin pas sulmit | `no ip route <ip-e-sulmuar>/32 192.168.50.101` |
 
-### Nexus 3k (network engineer configures)
+### Nexus 3k (konfigurohet nga network engineer)
 
-| Task | Configuration |
-|------|--------------|
-| Trunk to FloodGate | Allow vlan 40 and 50 on the port connecting to FloodGate server |
-| Trunk to ASR | Allow vlan 30, 40, and 50 |
+| Detyra | Konfigurimi |
+|--------|------------|
+| Trunk drejt FloodGate | Lejo vlan 40 dhe 50 ne portin qe lidhet me serverin FloodGate |
+| Trunk drejt ASR | Lejo vlan 30, 40, dhe 50 |
 
-### FloodGate Server (already configured)
+### Serveri FloodGate (tashme i konfiguruar)
 
-| Task | Status |
-|------|--------|
-| XDP scrubber on vlan50 | READY |
-| sFlow collector on port 6343 | READY |
-| ACL auto-block/unblock | READY |
-| Rate limiting (TCP/UDP/ICMP/SYN) | READY |
-| Whitelist/Blacklist | READY |
+| Detyra | Statusi |
+|--------|--------|
+| XDP scrubber ne vlan50 | GATI |
+| sFlow collector ne port 6343 | GATI |
+| ACL auto-blloko/zhblloko | GATI |
+| Rate limiting (TCP/UDP/ICMP/SYN) | GATI |
+| Whitelist/Blacklist | GATI |
 
-### FloodGate command
+### Komanda FloodGate
 
 ```bash
 sudo floodgate -i vlan50 \
@@ -210,65 +210,65 @@ sudo floodgate -i vlan50 \
   -s 5
 ```
 
-| Flag | Value | Purpose |
+| Flag | Vlera | Qellimi |
 |------|-------|---------|
-| `-i vlan50` | vlan50 | Scrubbing interface |
+| `-i vlan50` | vlan50 | Interface per scrubbing |
 | `-t 10000` | 10K pps | TCP rate limit per source IP |
 | `-u 5000` | 5K pps | UDP rate limit per source IP |
 | `-c 100` | 100 pps | ICMP rate limit per source IP |
 | `-Y 500` | 500 pps | SYN rate limit per source IP |
-| `-S 6343` | port 6343 | sFlow collector listening port |
-| `-a` | - | Enable ACL auto-block engine |
-| `-w` | whitelist.txt | IPs that bypass all filtering |
-| `-s 5` | 5 sec | Show stats every 5 seconds |
+| `-S 6343` | port 6343 | Porti ku degjon sFlow collector |
+| `-a` | - | Aktivo ACL engine automatik |
+| `-w` | whitelist.txt | IP qe kalojne pa asnje filtrim |
+| `-s 5` | 5 sek | Shfaq statistika cdo 5 sekonda |
 
-## Return Path for Clean Traffic
+## Rruga e kthimit per trafikun e paster
 
-FloodGate server needs IP forwarding enabled and a route back:
+Serveri FloodGate duhet te kete IP forwarding aktiv dhe nje route kthimi:
 
 ```bash
 sysctl -w net.ipv4.ip_forward=1
 ip route add 192.168.10.0/24 via 192.168.50.1 dev vlan50
 ```
 
-Clean packets that pass XDP → Linux forwards them → back to ASR via vlan50 → ASR delivers to vlan30 → victim.
+Paketat e pastra qe kalojne XDP → Linux i forwardon → kthehen ne ASR permes vlan50 → ASR i dergon ne vlan30 → viktima.
 
-## IPs to Whitelist on FloodGate
+## IP qe duhen ne whitelist te FloodGate
 
-These IPs must be in `/etc/floodgate/whitelist.txt` so they never get blocked:
+Keto IP duhet te jene ne `/etc/floodgate/whitelist.txt` qe te mos bllokohen kurre:
 
 ```
-192.168.50.1      # ASR gateway on vlan50
-192.168.50.2      # Mikrotik on vlan50
-192.168.1.1       # ASR gateway on vlan40
-192.168.10.1      # ASR gateway on vlan30
+192.168.50.1      # ASR gateway ne vlan50
+192.168.50.2      # Mikrotik ne vlan50
+192.168.1.1       # ASR gateway ne vlan40
+192.168.10.1      # ASR gateway ne vlan30
 10.10.10.1        # Mikrotik vlan10
 10.10.10.2        # ASR vlan10
 10.10.20.1        # Mikrotik vlan20
 10.10.20.2        # ASR vlan20
 ```
 
-## Summary
+## Permbledhje
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                    WHAT TO CONFIGURE                      │
+│                  CFARE DUHET KONFIGURUAR                  │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
-│  NETWORK TEAM (ASR 9001 + Nexus 3k):                    │
-│  1. Configure sFlow on ASR → 192.168.1.101:6343         │
-│  2. Ensure vlan 40,50 trunk to FloodGate server          │
-│  3. When attack: add static route to 192.168.50.101      │
-│  4. When attack over: remove route                       │
-│  5. (Optional) Set up BGP for automatic diversion        │
+│  EKIPI I RRJETIT (ASR 9001 + Nexus 3k):                │
+│  1. Konfiguro sFlow ne ASR → 192.168.1.101:6343        │
+│  2. Siguro qe vlan 40,50 trunk arrin ne serverin FG     │
+│  3. Kur ka sulm: shto static route ne 192.168.50.101    │
+│  4. Kur sulmi mbaron: hiq routen                         │
+│  5. (Opsionale) Konfiguro BGP per devijim automatik      │
 │                                                          │
-│  FLOODGATE SERVER (already done):                        │
-│  1. vlan40 + vlan50 interfaces: CONFIGURED               │
-│  2. FloodGate binary: COMPILED                           │
-│  3. sFlow collector: READY on port 6343                  │
-│  4. XDP scrubber: READY on vlan50                        │
-│  5. ACL engine: READY                                    │
-│  6. Just run the command and it works                     │
+│  SERVERI FLOODGATE (tashme gati):                        │
+│  1. Interface vlan40 + vlan50: KONFIGURUAR               │
+│  2. FloodGate binary: KOMPILUAR                          │
+│  3. sFlow collector: GATI ne port 6343                   │
+│  4. XDP scrubber: GATI ne vlan50                         │
+│  5. ACL engine: GATI                                     │
+│  6. Vetem nis komanden dhe punon                          │
 │                                                          │
 └──────────────────────────────────────────────────────────┘
 ```
