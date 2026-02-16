@@ -1,0 +1,16 @@
+[Unit]
+Description=FloodGate XDP Traffic Scrubber + sFlow ACL
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/floodgate -i vlan50 -t 10000 -u 5000 -c 100 -Y 500 -S 6343 -a -w /etc/floodgate/whitelist.txt -s 10
+WorkingDirectory=/usr/local/lib
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target

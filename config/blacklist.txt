@@ -1,0 +1,2 @@
+# blacklist ips - nje ip per rresht
+# keto ip bllokohen menjehere

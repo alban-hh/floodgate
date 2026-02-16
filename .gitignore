@@ -1,0 +1,5 @@
+build/
+floodgate
+floodgate_kern.o
+*.o
+!src/**/*.c

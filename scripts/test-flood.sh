@@ -26,6 +26,6 @@ elif [ "$PROTOCOL" = "tcp" ]; then
         (echo "TEST" > /dev/tcp/$TARGET_IP/$PORT) 2>/dev/null
     done
 else
-    echo "Protokoll i pavlefshëm. Përdor 'udp' ose 'tcp'"
+    echo "Protokoll i pavlefshem. Perdor 'udp' ose 'tcp'"
     exit 1
 fi
