@@ -11,8 +11,9 @@
 #include <signal.h>
 #include <net/if.h>
 #include <linux/if_link.h>
-#include <bpf/netlink.h>
 #include <stdarg.h>
+
+extern int bpf_set_link_xdp_fd(int ifindex, int fd, __u32 flags);
 
 static pthread_t sflow_thread;
 static pthread_t acl_thread;
