@@ -34,7 +34,7 @@ static void pastrimi(int sig) {
         pthread_join(acl_thread, NULL);
 
     if (ifindex > 0)
-        bpf_xdp_detach(ifindex, XDP_FLAGS_UPDATE_IF_NOEXIST, NULL);
+        bpf_set_link_xdp_fd(ifindex, -1, XDP_FLAGS_UPDATE_IF_NOEXIST);
 
     if (obj)
         bpf_object__close(obj);
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (bpf_xdp_attach(ifindex, prog_fd, XDP_FLAGS_UPDATE_IF_NOEXIST, NULL) < 0) {
+    if (bpf_set_link_xdp_fd(ifindex, prog_fd, XDP_FLAGS_UPDATE_IF_NOEXIST) < 0) {
         fprintf(stderr, "Gabim ne attach te XDP: %s\n", strerror(errno));
         return 1;
     }
