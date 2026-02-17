@@ -65,6 +65,7 @@ aktivon: rate limiting per protokoll, syn flood detection, pps limit global, sfl
 | `-b` | file | ngarko blacklist nga file (nje ip per rresht) |
 | `-S` | port | aktivo sflow collector ne kete port udp |
 | `-a` | - | aktivo acl engine automatik |
+| `-C` | - | aktivo udp challenge-response |
 | `-s` | sekonda | shfaq statistika cdo x sekonda |
 | `-h` | - | shfaq ndihme |
 
@@ -95,8 +96,16 @@ sudo floodgate -i vlan50 -p 123 -U -w /etc/floodgate/whitelist.txt
 ### sulm i perzierm me sflow intelligence
 
 ```bash
-sudo floodgate -i vlan50 -t 10000 -u 5000 -c 100 -Y 500 -S 6343 -a -w /etc/floodgate/whitelist.txt -s 5
+sudo floodgate -i vlan50 -t 10000 -u 5000 -c 100 -Y 500 -S 6343 -a -C -w /etc/floodgate/whitelist.txt -s 5
 ```
+
+### udp reflection/amplification me challenge
+
+```bash
+sudo floodgate -i vlan50 -u 5000 -C -a -w /etc/floodgate/whitelist.txt -s 5
+```
+
+aktivon challenge-response per udp. cdo ip e re duhet te kaloje verifikimin perpara se te lejohet. ip e spoofuar nuk kalojne kurre.
 
 ### monitor vetem (pa filtrim)
 
@@ -199,6 +208,14 @@ pas 30 sekondash pa shkelje, niveli bie me 1. ip qe ndalojne sulmin kthehen ne N
 ### acl auto-block
 
 kur acl eshte aktiv (`-a`), skanon tabelen e ip cdo 5 sekonda. ip me mbi 10 shkelje kalojne ne blacklist per 300 sekonda (5 minuta). kur ttl skadon, zhbllokohen automatikisht.
+
+## udp challenge-response
+
+kur aktivohet me `-C`, floodgate verifikon qe cdo source ip qe dergon udp eshte reale dhe jo e spoofuar. per cdo paket udp nga nje ip e re, xdp dergon mbrapa nje cookie (4 bytes) me xdp_tx. nese ip pergjigjet me cookie-n e sakte brenda 5 sekondash, whitelistohet per 300 sekonda dhe trafiku kalon normalisht ne rate limiting. ip e spoofuar nuk e merrin kurre cookie-n pra nuk verifikohen kurre.
+
+ip qe jane ne whitelist, blacklist, ose tashme te verifikuara anashkalojne challenge-in komplet.
+
+kjo eshte ekuivalenti i syn cookies per udp - mbrojtje efektive kunder udp reflection/amplification ku source ip eshte gjithmone e spoofuar.
 
 ## statistikat
 
