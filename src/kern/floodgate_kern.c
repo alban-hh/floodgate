@@ -47,10 +47,43 @@ struct {
     __uint(max_entries, MAX_BLLOKUAR);
 } harta_bllokuar SEC(".maps");
 
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __type(key, __u32);
+    __type(value, struct challenge_hyrje);
+    __uint(max_entries, MAX_CHALLENGE);
+} harta_challenge SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __type(key, __u32);
+    __type(value, __u64);
+    __uint(max_entries, MAX_VERIFIKUAR);
+} harta_verifikuar SEC(".maps");
+
 static __always_inline void ndrysho_stat(__u32 idx, __u64 val) {
     __u64 *s = bpf_map_lookup_elem(&harta_statistika, &idx);
     if (s)
         __sync_fetch_and_add(s, val);
+}
+
+static __always_inline __u16 llogarit_ip_checksum(struct iphdr *ip, void *data_end) {
+    if ((void *)ip + sizeof(struct iphdr) > data_end)
+        return 0;
+
+    __u32 sum = 0;
+    __u16 *ptr = (__u16 *)ip;
+
+    ip->check = 0;
+
+    #pragma unroll
+    for (int i = 0; i < 10; i++) {
+        sum += ptr[i];
+    }
+
+    sum = (sum >> 16) + (sum & 0xffff);
+    sum += (sum >> 16);
+    return ~sum;
 }
 
 static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u16 porta_dest, __u16 gjatesia_pkt, __u8 eshte_syn) {
@@ -249,11 +282,78 @@ int floodgate_filter(struct xdp_md *ctx) {
         if ((void *)(udp + 1) > data_end)
             return XDP_PASS;
         porta_dest = bpf_ntohs(udp->dest);
+
+        __u32 cfg_key = 0;
+        struct konfigurimi *cfg = bpf_map_lookup_elem(&harta_config, &cfg_key);
+
+        if (cfg && cfg->challenge_aktiv) {
+            if (bpf_map_lookup_elem(&harta_bllokuar, &ip_burimi))
+                goto skip_challenge;
+            if (bpf_map_lookup_elem(&harta_whitelist, &ip_burimi))
+                goto skip_challenge;
+
+            __u64 *ver_ts = bpf_map_lookup_elem(&harta_verifikuar, &ip_burimi);
+            if (ver_ts) {
+                __u64 tani = bpf_ktime_get_ns();
+                if (tani - *ver_ts < CHALLENGE_SKADIMI_NS)
+                    goto skip_challenge;
+            }
+
+            void *payload = (void *)(udp + 1);
+            if (payload + 4 <= data_end) {
+                __u32 maybe_cookie = *(__u32 *)payload;
+                struct challenge_hyrje *ch = bpf_map_lookup_elem(&harta_challenge, &ip_burimi);
+                if (ch && ch->cookie == maybe_cookie) {
+                    __u64 tani = bpf_ktime_get_ns();
+                    if (tani - ch->koha < 5000000000ULL) {
+                        bpf_map_update_elem(&harta_verifikuar, &ip_burimi, &tani, BPF_ANY);
+                        bpf_map_delete_elem(&harta_challenge, &ip_burimi);
+                        ndrysho_stat(13, 1);
+                        goto skip_challenge;
+                    }
+                }
+            }
+
+            if (ip->ihl != 5)
+                goto skip_challenge;
+
+            __u32 cookie = bpf_get_prandom_u32();
+            struct challenge_hyrje new_ch = {};
+            new_ch.koha = bpf_ktime_get_ns();
+            new_ch.cookie = cookie;
+            bpf_map_update_elem(&harta_challenge, &ip_burimi, &new_ch, BPF_ANY);
+
+            unsigned char tmp_mac[ETH_ALEN];
+            __builtin_memcpy(tmp_mac, eth->h_dest, ETH_ALEN);
+            __builtin_memcpy(eth->h_dest, eth->h_source, ETH_ALEN);
+            __builtin_memcpy(eth->h_source, tmp_mac, ETH_ALEN);
+
+            __u32 tmp_ip = ip->saddr;
+            ip->saddr = ip->daddr;
+            ip->daddr = tmp_ip;
+            ip->ttl = 64;
+            ip->tot_len = bpf_htons(sizeof(struct iphdr) + sizeof(struct udphdr) + 4);
+
+            __u16 tmp_port = udp->source;
+            udp->source = udp->dest;
+            udp->dest = tmp_port;
+            udp->len = bpf_htons(sizeof(struct udphdr) + 4);
+            udp->check = 0;
+
+            if (payload + 4 <= data_end)
+                *(__u32 *)payload = cookie;
+
+            ip->check = llogarit_ip_checksum(ip, data_end);
+
+            ndrysho_stat(12, 1);
+            return XDP_TX;
+        }
     } else if (protokoll == IPPROTO_ICMP) {
         if (l4 + sizeof(struct icmphdr) > data_end)
             return XDP_PASS;
     }
 
+skip_challenge:
     return procezo_paketen(ip_burimi, protokoll, porta_dest, gjatesia_pkt, eshte_syn);
 }
 

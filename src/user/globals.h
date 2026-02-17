@@ -20,6 +20,8 @@ extern int fd_harta_stat;
 extern int fd_harta_ip;
 extern int fd_harta_whitelist;
 extern int fd_harta_bllokuar;
+extern int fd_harta_challenge;
+extern int fd_harta_verifikuar;
 extern int ifindex;
 extern struct bpf_object *obj;
 extern volatile int vazhdo;

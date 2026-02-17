@@ -63,11 +63,12 @@ static void shfaq_perdorimi(const char *programi) {
     printf("  -b <file>         Blacklist file\n");
     printf("  -S <port>         sFlow port (default 6343)\n");
     printf("  -a                Aktivo ACL automatik\n");
+    printf("  -C                Aktivo UDP challenge-response\n");
     printf("  -s <sec>          Shfaq statistika cdo X sekonda\n");
     printf("  -h                Shfaq ndihme\n\n");
     printf("Shembull:\n");
-    printf("  %s -i vlan50 -t 10000 -u 5000 -c 100 -S 6343 -a -w whitelist.txt -s 5\n", programi);
-    printf("  %s -i eth0 -P 50000 -Y 500 -S 6343 -a -b blacklist.txt\n\n", programi);
+    printf("  %s -i vlan50 -t 10000 -u 5000 -c 100 -S 6343 -a -C -w whitelist.txt -s 5\n", programi);
+    printf("  %s -i eth0 -P 50000 -Y 500 -S 6343 -a -C -b blacklist.txt\n\n", programi);
 }
 
 int main(int argc, char **argv) {
@@ -92,7 +93,7 @@ int main(int argc, char **argv) {
 
     libbpf_set_print(print_libbpf_log);
 
-    while ((opt = getopt(argc, argv, "i:p:t:u:c:P:B:Y:w:b:UTS:as:h")) != -1) {
+    while ((opt = getopt(argc, argv, "i:p:t:u:c:P:B:Y:w:b:UTS:aCs:h")) != -1) {
         switch (opt) {
             case 'i': interface = optarg; break;
             case 'p': cfg.porta_target = atoi(optarg); break;
@@ -108,6 +109,7 @@ int main(int argc, char **argv) {
             case 'b': blacklist_fajlli = optarg; break;
             case 'S': sflow_porta = atoi(optarg); break;
             case 'a': acl_aktiv = 1; break;
+            case 'C': cfg.challenge_aktiv = 1; break;
             case 's': intervali_stat = atoi(optarg); break;
             case 'h': shfaq_perdorimi(argv[0]); return 0;
             default: shfaq_perdorimi(argv[0]); return 1;
@@ -162,6 +164,8 @@ int main(int argc, char **argv) {
     fd_harta_ip = bpf_object__find_map_fd_by_name(obj, "harta_ip");
     fd_harta_whitelist = bpf_object__find_map_fd_by_name(obj, "harta_whitelist");
     fd_harta_bllokuar = bpf_object__find_map_fd_by_name(obj, "harta_bllokuar");
+    fd_harta_challenge = bpf_object__find_map_fd_by_name(obj, "harta_challenge");
+    fd_harta_verifikuar = bpf_object__find_map_fd_by_name(obj, "harta_verifikuar");
 
     if (fd_harta_config < 0 || fd_harta_stat < 0 || fd_harta_ip < 0 ||
         fd_harta_whitelist < 0 || fd_harta_bllokuar < 0) {
@@ -199,6 +203,7 @@ int main(int argc, char **argv) {
     if (cfg.limit_syn)    printf("SYN limit:     %llu pps\n", (unsigned long long)cfg.limit_syn);
     if (sflow_porta)      printf("sFlow:         port %d\n", sflow_porta);
     if (acl_aktiv)        printf("ACL:           aktiv\n");
+    if (cfg.challenge_aktiv) printf("Challenge:     aktiv (UDP)\n");
     printf("\n");
 
     if (sflow_porta > 0) {

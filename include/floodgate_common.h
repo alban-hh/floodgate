@@ -13,6 +13,9 @@
 
 #define DRITARJA_NS 1000000000ULL
 #define DEKADENCA_NS 30000000000ULL
+#define CHALLENGE_SKADIMI_NS 300000000000ULL
+#define MAX_CHALLENGE 1000000
+#define MAX_VERIFIKUAR 2000000
 
 struct rregull_trafikut {
     __u64 numrues_paketa;
@@ -34,6 +37,14 @@ struct konfigurimi {
     __u32 bloko_tcp;
     __u32 porta_target;
     __u32 aktiv;
+    __u32 challenge_aktiv;
+    __u32 _pad;
+};
+
+struct challenge_hyrje {
+    __u64 koha;
+    __u32 cookie;
+    __u32 _pad;
 };
 
 #endif

@@ -75,6 +75,13 @@ void shfaq_statistika(void) {
     printf("    SYN flood:      %-15llu\n", (unsigned long long)vlerat[9]);
     printf("    Bytes:          %-15s\n", buf_bytes_bl);
 
+    if (vlerat[12] > 0 || vlerat[13] > 0) {
+        printf("\n");
+        printf("  \033[1;34mCHALLENGE:\033[0m\n");
+        printf("    Derguar:        %-15llu\n", (unsigned long long)vlerat[12]);
+        printf("    Verifikuar:     %-15llu\n", (unsigned long long)vlerat[13]);
+    }
+
     if (acl_aktiv || sflow_porta > 0) {
         int nr_bllokuar = 0;
         __u32 bl_key;
