@@ -26,16 +26,6 @@ static int print_libbpf_log(enum libbpf_print_level lvl, const char *fmt, va_lis
 
 static void pastrimi(int sig) {
     vazhdo = 0;
-    __u32 celes = 0;
-    struct konfigurimi cfg = {0};
-
-    if (fd_harta_config >= 0)
-        bpf_map_update_elem(fd_harta_config, &celes, &cfg, BPF_ANY);
-
-    if (sflow_porta > 0)
-        pthread_join(sflow_thread, NULL);
-    if (acl_aktiv)
-        pthread_join(acl_thread, NULL);
 
     if (ifindex > 0)
         bpf_set_link_xdp_fd(ifindex, -1, XDP_FLAGS_UPDATE_IF_NOEXIST);
@@ -44,7 +34,7 @@ static void pastrimi(int sig) {
         bpf_object__close(obj);
 
     printf("\nFloodGate ndalur\n");
-    exit(0);
+    _exit(0);
 }
 
 static void shfaq_perdorimi(const char *programi) {
