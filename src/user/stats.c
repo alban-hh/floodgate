@@ -115,6 +115,7 @@ void shfaq_statistika(void) {
     }
 
     printf("\033[1;36m=================================================\033[0m\n\n");
+    fflush(stdout);
 }
 
 void shfaq_top_ip(int max_shfaq) {

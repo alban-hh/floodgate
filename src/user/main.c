@@ -91,6 +91,7 @@ int main(int argc, char **argv) {
     char *whitelist_fajlli = NULL;
     char *blacklist_fajlli = NULL;
 
+    setlinebuf(stdout);
     libbpf_set_print(print_libbpf_log);
 
     while ((opt = getopt(argc, argv, "i:p:t:u:c:P:B:Y:w:b:UTS:aCs:h")) != -1) {
