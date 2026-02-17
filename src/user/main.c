@@ -19,6 +19,8 @@ static pthread_t sflow_thread;
 static pthread_t acl_thread;
 
 static int print_libbpf_log(enum libbpf_print_level lvl, const char *fmt, va_list args) {
+    if (lvl == LIBBPF_DEBUG)
+        return 0;
     return vfprintf(stderr, fmt, args);
 }
 
@@ -227,8 +229,7 @@ int main(int argc, char **argv) {
         while (vazhdo) {
             sleep(intervali_stat);
             if (!vazhdo) break;
-            shfaq_statistika();
-            shfaq_top_ip(20);
+            shfaq_dashboard(20);
         }
     } else {
         while (vazhdo) {

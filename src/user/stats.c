@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-void formato_bytes(char *buf, size_t len, __u64 bytes) {
+static void formato_bytes(char *buf, size_t len, __u64 bytes) {
     if (bytes >= 1000000000ULL)
         snprintf(buf, len, "%.2f GB", (double)bytes / 1000000000.0);
     else if (bytes >= 1000000ULL)
@@ -17,7 +17,7 @@ void formato_bytes(char *buf, size_t len, __u64 bytes) {
         snprintf(buf, len, "%llu B", (unsigned long long)bytes);
 }
 
-void formato_numri(char *buf, size_t len, __u64 n) {
+static void formato_numri(char *buf, size_t len, __u64 n) {
     if (n >= 1000000000ULL)
         snprintf(buf, len, "%.2fB", (double)n / 1000000000.0);
     else if (n >= 1000000ULL)
@@ -28,7 +28,7 @@ void formato_numri(char *buf, size_t len, __u64 n) {
         snprintf(buf, len, "%llu", (unsigned long long)n);
 }
 
-const char *emri_nivelit(__u32 niveli) {
+static const char *emri_nivelit(__u32 niveli) {
     switch (niveli) {
         case NIVELI_NORMAL: return "NORMAL";
         case NIVELI_DYSHIMTE: return "DYSHIMTE";
@@ -38,15 +38,20 @@ const char *emri_nivelit(__u32 niveli) {
     }
 }
 
-void shfaq_statistika(void) {
-    __u64 vlerat[16] = {0};
-    __u32 celes;
+void shfaq_dashboard(int max_top_ip) {
+    static int linja_para = 0;
+
+    if (linja_para > 0)
+        printf("\033[%dA\033[J", linja_para);
+    int L = 0;
+
     int nr_cpu = libbpf_num_possible_cpus();
     if (nr_cpu < 1) nr_cpu = 1;
     __u64 *percpu = calloc(nr_cpu, sizeof(__u64));
     if (!percpu) return;
 
-    for (celes = 0; celes < 16; celes++) {
+    __u64 vlerat[16] = {0};
+    for (__u32 celes = 0; celes < 16; celes++) {
         memset(percpu, 0, nr_cpu * sizeof(__u64));
         if (bpf_map_lookup_elem(fd_harta_stat, &celes, percpu) == 0) {
             for (int i = 0; i < nr_cpu; i++)
@@ -60,30 +65,28 @@ void shfaq_statistika(void) {
     formato_bytes(buf_bytes_bl, sizeof(buf_bytes_bl), vlerat[11]);
     formato_numri(buf_total, sizeof(buf_total), vlerat[8]);
 
-    printf("\n\033[1;36m============= FloodGate Statistika =============\033[0m\n");
-    printf("\033[1;33m  Total paketa:     %-15s\033[0m\n", buf_total);
-    printf("\n");
-    printf("  \033[1;32mLEJUAR:\033[0m\n");
-    printf("    TCP:            %-15llu\n", (unsigned long long)vlerat[0]);
-    printf("    UDP:            %-15llu\n", (unsigned long long)vlerat[1]);
-    printf("    ICMP:           %-15llu\n", (unsigned long long)vlerat[2]);
-    printf("    Bytes:          %-15s\n", buf_bytes_lej);
-    printf("\n");
-    printf("  \033[1;31mBLLOKUAR:\033[0m\n");
-    printf("    TCP:            %-15llu\n", (unsigned long long)vlerat[3]);
-    printf("    UDP:            %-15llu\n", (unsigned long long)vlerat[4]);
-    printf("    ICMP:           %-15llu\n", (unsigned long long)vlerat[5]);
-    printf("    Blacklist:      %-15llu\n", (unsigned long long)vlerat[6]);
-    printf("    Auto-block:     %-15llu\n", (unsigned long long)vlerat[7]);
-    printf("    SYN flood:      %-15llu\n", (unsigned long long)vlerat[9]);
-    printf("    Bytes:          %-15s\n", buf_bytes_bl);
+    printf("\033[1;36m============= FloodGate Statistika =============\033[0m\n"); L++;
+    printf("\033[1;33m  Total paketa:     %-15s\033[0m\n", buf_total); L++;
+    printf("\n"); L++;
+    printf("  \033[1;32mLEJUAR:\033[0m\n"); L++;
+    printf("    TCP:            %-15llu\n", (unsigned long long)vlerat[0]); L++;
+    printf("    UDP:            %-15llu\n", (unsigned long long)vlerat[1]); L++;
+    printf("    ICMP:           %-15llu\n", (unsigned long long)vlerat[2]); L++;
+    printf("    Bytes:          %-15s\n", buf_bytes_lej); L++;
+    printf("\n"); L++;
+    printf("  \033[1;31mBLLOKUAR:\033[0m\n"); L++;
+    printf("    TCP:            %-15llu\n", (unsigned long long)vlerat[3]); L++;
+    printf("    UDP:            %-15llu\n", (unsigned long long)vlerat[4]); L++;
+    printf("    ICMP:           %-15llu\n", (unsigned long long)vlerat[5]); L++;
+    printf("    Blacklist:      %-15llu\n", (unsigned long long)vlerat[6]); L++;
+    printf("    Auto-block:     %-15llu\n", (unsigned long long)vlerat[7]); L++;
+    printf("    SYN flood:      %-15llu\n", (unsigned long long)vlerat[9]); L++;
+    printf("    Bytes:          %-15s\n", buf_bytes_bl); L++;
 
-    if (vlerat[12] > 0 || vlerat[13] > 0) {
-        printf("\n");
-        printf("  \033[1;34mCHALLENGE:\033[0m\n");
-        printf("    Derguar:        %-15llu\n", (unsigned long long)vlerat[12]);
-        printf("    Verifikuar:     %-15llu\n", (unsigned long long)vlerat[13]);
-    }
+    printf("\n"); L++;
+    printf("  \033[1;34mCHALLENGE:\033[0m\n"); L++;
+    printf("    Derguar:        %-15llu\n", (unsigned long long)vlerat[12]); L++;
+    printf("    Verifikuar:     %-15llu\n", (unsigned long long)vlerat[13]); L++;
 
     if (acl_aktiv || sflow_porta > 0) {
         int nr_bllokuar = 0;
@@ -111,19 +114,16 @@ void shfaq_statistika(void) {
             ret = bpf_map_get_next_key(fd_harta_ip, &prev, &ip_key);
         }
 
-        printf("\n");
-        printf("  \033[1;35mACL:\033[0m\n");
-        printf("    Blacklist:      %-15d\n", nr_bllokuar);
-        printf("    Dyshimte:       %-15d\n", nr_dyshimte);
-        printf("    Kufizuar:       %-15d\n", nr_kufizuar);
-        printf("    Auto-bllokuar:  %-15d\n", nr_auto_bl);
+        printf("\n"); L++;
+        printf("  \033[1;35mACL:\033[0m\n"); L++;
+        printf("    Blacklist:      %-15d\n", nr_bllokuar); L++;
+        printf("    Dyshimte:       %-15d\n", nr_dyshimte); L++;
+        printf("    Kufizuar:       %-15d\n", nr_kufizuar); L++;
+        printf("    Auto-bllokuar:  %-15d\n", nr_auto_bl); L++;
     }
 
-    printf("\033[1;36m=================================================\033[0m\n\n");
-    fflush(stdout);
-}
+    printf("\033[1;36m=================================================\033[0m\n"); L++;
 
-void shfaq_top_ip(int max_shfaq) {
     struct ip_renditje {
         __u32 ip;
         __u64 paketa;
@@ -173,12 +173,13 @@ void shfaq_top_ip(int max_shfaq) {
         }
     }
 
-    if (nr_top > max_shfaq)
-        nr_top = max_shfaq;
+    if (nr_top > max_top_ip)
+        nr_top = max_top_ip;
 
     if (nr_top > 0) {
-        printf("\033[1;33m  TOP %d IP:\033[0m\n", nr_top);
-        printf("    %-18s %-12s %-12s %-10s\n", "IP", "PPS", "NIVELI", "SHKELJET");
+        printf("\n"); L++;
+        printf("\033[1;33m  TOP %d IP:\033[0m\n", nr_top); L++;
+        printf("    %-18s %-12s %-12s %-10s\n", "IP", "PPS", "NIVELI", "SHKELJET"); L++;
         for (int i = 0; i < nr_top; i++) {
             struct in_addr a;
             a.s_addr = top[i].ip;
@@ -199,7 +200,10 @@ void shfaq_top_ip(int max_shfaq) {
                    inet_ntoa(a), pps_buf,
                    ngjyra, emri_nivelit(top[i].niveli),
                    top[i].shkeljet);
+            L++;
         }
-        printf("\n");
     }
+
+    linja_para = L;
+    fflush(stdout);
 }
