@@ -45,8 +45,10 @@ void *acl_menaxher(void *arg) {
 
         __u32 ip_key = 0, next_key;
         struct rregull_trafikut rregull;
+        int nr_iter = 0;
         int ret = bpf_map_get_next_key(fd_harta_ip, NULL, &next_key);
-        while (ret == 0) {
+        while (ret == 0 && nr_iter < 100000) {
+            nr_iter++;
             ip_key = next_key;
             if (bpf_map_lookup_elem(fd_harta_ip, &ip_key, &rregull) == 0) {
                 if (rregull.shkeljet > acl_pragu_shkeljet) {
@@ -72,8 +74,10 @@ void *acl_menaxher(void *arg) {
         int nr_fshirje = 0;
         __u64 koha_tani = time(NULL);
 
+        nr_iter = 0;
         ret = bpf_map_get_next_key(fd_harta_bllokuar, NULL, &bl_next);
-        while (ret == 0) {
+        while (ret == 0 && nr_iter < 100000) {
+            nr_iter++;
             bl_key = bl_next;
             __u64 koha_bl;
             if (bpf_map_lookup_elem(fd_harta_bllokuar, &bl_key, &koha_bl) == 0) {
@@ -96,6 +100,7 @@ void *acl_menaxher(void *arg) {
 
         if (bllokime_reja > 0 || zhbllokime > 0) {
             printf("[ACL] cikli: +%d bllokime, -%d zhbllokime\n", bllokime_reja, zhbllokime);
+            fflush(stdout);
         }
     }
 

@@ -86,17 +86,19 @@ void shfaq_statistika(void) {
         int nr_bllokuar = 0;
         __u32 bl_key;
         int ret = bpf_map_get_next_key(fd_harta_bllokuar, NULL, &bl_key);
-        while (ret == 0) {
+        while (ret == 0 && nr_bllokuar < 100000) {
             nr_bllokuar++;
             __u32 prev = bl_key;
             ret = bpf_map_get_next_key(fd_harta_bllokuar, &prev, &bl_key);
         }
 
         int nr_dyshimte = 0, nr_kufizuar = 0, nr_auto_bl = 0;
+        int nr_iter = 0;
         __u32 ip_key;
         struct rregull_trafikut rr;
         ret = bpf_map_get_next_key(fd_harta_ip, NULL, &ip_key);
-        while (ret == 0) {
+        while (ret == 0 && nr_iter < 100000) {
+            nr_iter++;
             if (bpf_map_lookup_elem(fd_harta_ip, &ip_key, &rr) == 0) {
                 if (rr.niveli == NIVELI_DYSHIMTE) nr_dyshimte++;
                 else if (rr.niveli == NIVELI_KUFIZUAR) nr_kufizuar++;
@@ -129,8 +131,10 @@ void shfaq_top_ip(int max_shfaq) {
 
     __u32 ip_key;
     struct rregull_trafikut rr;
+    int nr_iter = 0;
     int ret = bpf_map_get_next_key(fd_harta_ip, NULL, &ip_key);
-    while (ret == 0) {
+    while (ret == 0 && nr_iter < 100000) {
+        nr_iter++;
         if (bpf_map_lookup_elem(fd_harta_ip, &ip_key, &rr) == 0 && rr.numrues_paketa > 0) {
             if (nr_top < 64) {
                 top[nr_top].ip = ip_key;
