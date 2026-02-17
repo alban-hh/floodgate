@@ -1,6 +1,7 @@
 #include "stats.h"
 #include "globals.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -40,17 +41,19 @@ const char *emri_nivelit(__u32 niveli) {
 void shfaq_statistika(void) {
     __u64 vlerat[16] = {0};
     __u32 celes;
-    int nr_cpu = sysconf(_SC_NPROCESSORS_ONLN);
+    int nr_cpu = libbpf_num_possible_cpus();
     if (nr_cpu < 1) nr_cpu = 1;
-    __u64 percpu[nr_cpu];
+    __u64 *percpu = calloc(nr_cpu, sizeof(__u64));
+    if (!percpu) return;
 
     for (celes = 0; celes < 16; celes++) {
-        memset(percpu, 0, sizeof(percpu));
+        memset(percpu, 0, nr_cpu * sizeof(__u64));
         if (bpf_map_lookup_elem(fd_harta_stat, &celes, percpu) == 0) {
             for (int i = 0; i < nr_cpu; i++)
                 vlerat[celes] += percpu[i];
         }
     }
+    free(percpu);
 
     char buf_bytes_lej[32], buf_bytes_bl[32], buf_total[32];
     formato_bytes(buf_bytes_lej, sizeof(buf_bytes_lej), vlerat[10]);
