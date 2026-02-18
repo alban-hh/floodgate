@@ -86,6 +86,16 @@ static __always_inline __u16 llogarit_ip_checksum(struct iphdr *ip, void *data_e
     return ~sum;
 }
 
+static __always_inline void stat_lejuar_protokoll(__u8 protokoll, __u16 gjatesia_pkt) {
+    if (protokoll == IPPROTO_TCP)
+        ndrysho_stat(0, 1);
+    else if (protokoll == IPPROTO_UDP)
+        ndrysho_stat(1, 1);
+    else if (protokoll == IPPROTO_ICMP)
+        ndrysho_stat(2, 1);
+    ndrysho_stat(10, gjatesia_pkt);
+}
+
 static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u16 porta_dest, __u16 gjatesia_pkt, __u8 eshte_syn) {
     struct rregull_trafikut *rregull;
     struct konfigurimi *cfg;
@@ -103,7 +113,7 @@ static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u1
 
     __u8 *whitelisted = bpf_map_lookup_elem(&harta_whitelist, &ip_burimi);
     if (whitelisted) {
-        ndrysho_stat(10, gjatesia_pkt);
+        stat_lejuar_protokoll(protokoll, gjatesia_pkt);
         return XDP_PASS;
     }
 
@@ -124,7 +134,7 @@ static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u1
         i_ri.niveli = NIVELI_NORMAL;
         i_ri.shkeljet = 0;
         bpf_map_update_elem(&harta_ip, &ip_burimi, &i_ri, BPF_ANY);
-        ndrysho_stat(10, gjatesia_pkt);
+        stat_lejuar_protokoll(protokoll, gjatesia_pkt);
         return XDP_PASS;
     }
 
@@ -146,7 +156,7 @@ static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u1
         rregull->numrues_paketa = 1;
         rregull->bytes_totale = gjatesia_pkt;
         rregull->koha_fundit = koha_tani;
-        ndrysho_stat(10, gjatesia_pkt);
+        stat_lejuar_protokoll(protokoll, gjatesia_pkt);
         return XDP_PASS;
     }
 
