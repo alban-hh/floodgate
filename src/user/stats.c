@@ -65,28 +65,28 @@ void shfaq_dashboard(int max_top_ip) {
     formato_bytes(buf_bytes_bl, sizeof(buf_bytes_bl), vlerat[11]);
     formato_numri(buf_total, sizeof(buf_total), vlerat[8]);
 
-    P("\033[H\033[?25l");
-    P("\033[1;36m============= FloodGate Statistika =============\033[0m\033[K\n");
-    P("\033[1;33m  Total paketa:     %-15s\033[0m\033[K\n", buf_total);
-    P("\033[K\n");
-    P("  \033[1;32mLEJUAR:\033[0m\033[K\n");
-    P("    TCP:            %-15llu\033[K\n", (unsigned long long)vlerat[0]);
-    P("    UDP:            %-15llu\033[K\n", (unsigned long long)vlerat[1]);
-    P("    ICMP:           %-15llu\033[K\n", (unsigned long long)vlerat[2]);
-    P("    Bytes:          %-15s\033[K\n", buf_bytes_lej);
-    P("\033[K\n");
-    P("  \033[1;31mBLLOKUAR:\033[0m\033[K\n");
-    P("    TCP:            %-15llu\033[K\n", (unsigned long long)vlerat[3]);
-    P("    UDP:            %-15llu\033[K\n", (unsigned long long)vlerat[4]);
-    P("    ICMP:           %-15llu\033[K\n", (unsigned long long)vlerat[5]);
-    P("    Blacklist:      %-15llu\033[K\n", (unsigned long long)vlerat[6]);
-    P("    Auto-block:     %-15llu\033[K\n", (unsigned long long)vlerat[7]);
-    P("    SYN flood:      %-15llu\033[K\n", (unsigned long long)vlerat[9]);
-    P("    Bytes:          %-15s\033[K\n", buf_bytes_bl);
-    P("\033[K\n");
-    P("  \033[1;34mCHALLENGE:\033[0m\033[K\n");
-    P("    Derguar:        %-15llu\033[K\n", (unsigned long long)vlerat[12]);
-    P("    Verifikuar:     %-15llu\033[K\n", (unsigned long long)vlerat[13]);
+    P("\033[2J\033[H");
+    P("\033[1;36m============= FloodGate Statistika =============\033[0m\n");
+    P("\033[1;33m  Total paketa:     %-15s\033[0m\n", buf_total);
+    P("\n");
+    P("  \033[1;32mLEJUAR:\033[0m\n");
+    P("    TCP:            %-15llu\n", (unsigned long long)vlerat[0]);
+    P("    UDP:            %-15llu\n", (unsigned long long)vlerat[1]);
+    P("    ICMP:           %-15llu\n", (unsigned long long)vlerat[2]);
+    P("    Bytes:          %-15s\n", buf_bytes_lej);
+    P("\n");
+    P("  \033[1;31mBLLOKUAR:\033[0m\n");
+    P("    TCP:            %-15llu\n", (unsigned long long)vlerat[3]);
+    P("    UDP:            %-15llu\n", (unsigned long long)vlerat[4]);
+    P("    ICMP:           %-15llu\n", (unsigned long long)vlerat[5]);
+    P("    Blacklist:      %-15llu\n", (unsigned long long)vlerat[6]);
+    P("    Auto-block:     %-15llu\n", (unsigned long long)vlerat[7]);
+    P("    SYN flood:      %-15llu\n", (unsigned long long)vlerat[9]);
+    P("    Bytes:          %-15s\n", buf_bytes_bl);
+    P("\n");
+    P("  \033[1;34mCHALLENGE:\033[0m\n");
+    P("    Derguar:        %-15llu\n", (unsigned long long)vlerat[12]);
+    P("    Verifikuar:     %-15llu\n", (unsigned long long)vlerat[13]);
 
     if (acl_aktiv || sflow_porta > 0) {
         int nr_bllokuar = 0;
@@ -114,15 +114,15 @@ void shfaq_dashboard(int max_top_ip) {
             ret = bpf_map_get_next_key(fd_harta_ip, &prev, &ip_key);
         }
 
-        P("\033[K\n");
-        P("  \033[1;35mACL:\033[0m\033[K\n");
-        P("    Blacklist:      %-15d\033[K\n", nr_bllokuar);
-        P("    Dyshimte:       %-15d\033[K\n", nr_dyshimte);
-        P("    Kufizuar:       %-15d\033[K\n", nr_kufizuar);
-        P("    Auto-bllokuar:  %-15d\033[K\n", nr_auto_bl);
+        P("\n");
+        P("  \033[1;35mACL:\033[0m\n");
+        P("    Blacklist:      %-15d\n", nr_bllokuar);
+        P("    Dyshimte:       %-15d\n", nr_dyshimte);
+        P("    Kufizuar:       %-15d\n", nr_kufizuar);
+        P("    Auto-bllokuar:  %-15d\n", nr_auto_bl);
     }
 
-    P("\033[1;36m=================================================\033[0m\033[K\n");
+    P("\033[1;36m=================================================\033[0m\n");
 
     struct ip_renditje {
         __u32 ip;
@@ -177,9 +177,9 @@ void shfaq_dashboard(int max_top_ip) {
         nr_top = max_top_ip;
 
     if (nr_top > 0) {
-        P("\033[K\n");
-        P("\033[1;33m  TOP %d IP:\033[0m\033[K\n", nr_top);
-        P("    %-18s %-12s %-12s %-10s\033[K\n", "IP", "PPS", "NIVELI", "SHKELJET");
+        P("\n");
+        P("\033[1;33m  TOP %d IP:\033[0m\n", nr_top);
+        P("    %-18s %-12s %-12s %-10s\n", "IP", "PPS", "NIVELI", "SHKELJET");
         for (int i = 0; i < nr_top; i++) {
             struct in_addr a;
             a.s_addr = top[i].ip;
@@ -196,28 +196,12 @@ void shfaq_dashboard(int max_top_ip) {
             else
                 ngjyra = "\033[0;32m";
 
-            P("    %-18s %-12s %s%-12s\033[0m %-10u\033[K\n",
+            P("    %-18s %-12s %s%-12s\033[0m %-10u\n",
                    inet_ntoa(a), pps_buf,
                    ngjyra, emri_nivelit(top[i].niveli),
                    top[i].shkeljet);
         }
     }
 
-    pthread_mutex_lock(&acl_log_mutex);
-    if (acl_log_nr > 0) {
-        P("\033[K\n");
-        P("  \033[1;35mACL LOG:\033[0m\033[K\n");
-        int fillimi = (acl_log_nr >= ACL_LOG_MAX) ? acl_log_idx : 0;
-        int sa = (acl_log_nr < ACL_LOG_MAX) ? acl_log_nr : ACL_LOG_MAX;
-        for (int i = 0; i < sa; i++) {
-            int idx = (fillimi + i) % ACL_LOG_MAX;
-            P("    %s\033[K\n", acl_log[idx]);
-        }
-    }
-    pthread_mutex_unlock(&acl_log_mutex);
-
-    P("\033[J");
-
-    fwrite(buf, 1, pos, stdout);
-    fflush(stdout);
+    write(STDOUT_FILENO, buf, pos);
 }
