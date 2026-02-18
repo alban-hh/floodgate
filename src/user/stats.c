@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 #define BUF_MAX 16384
 #define P(...) pos += snprintf(buf + pos, BUF_MAX - pos, __VA_ARGS__)
@@ -124,9 +125,22 @@ void shfaq_dashboard(int max_top_ip) {
     }
 
     if (flowspec_aktiv) {
+        struct flowspec_info fs_lista[FLOWSPEC_MAX_MITIGIME];
+        int fs_nr = flowspec_merr_listen(fs_lista, FLOWSPEC_MAX_MITIGIME);
+        __u64 koha_tani = time(NULL);
+
         P("\n");
         P("  \033[1;36mFLOWSPEC:\033[0m\n");
-        P("    Mitigime aktive: %-15d\n", flowspec_nr_aktiv());
+        P("    Mitigime aktive: %d\n", fs_nr);
+        for (int i = 0; i < fs_nr; i++) {
+            struct in_addr a;
+            a.s_addr = fs_lista[i].ip;
+            __u64 sekonda = koha_tani - fs_lista[i].koha_fillimit;
+            __u64 min = sekonda / 60;
+            __u64 sek = sekonda % 60;
+            P("    \033[1;31m>> %-18s\033[0m  redirect -> 192.168.50.101  (%llum%llus)\n",
+                inet_ntoa(a), (unsigned long long)min, (unsigned long long)sek);
+        }
     }
 
     P("\033[1;36m=================================================\033[0m\n");

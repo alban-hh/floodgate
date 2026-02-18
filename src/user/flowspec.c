@@ -21,6 +21,19 @@ int flowspec_nr_aktiv(void) {
     return nr_aktiv;
 }
 
+int flowspec_merr_listen(struct flowspec_info *dst, int max) {
+    int n = 0;
+    for (int i = 0; i < FLOWSPEC_MAX_MITIGIME && n < max; i++) {
+        if (lista[i].aktiv) {
+            dst[n].ip = lista[i].ip;
+            dst[n].koha_fillimit = lista[i].koha_fillimit;
+            dst[n].aktiv = 1;
+            n++;
+        }
+    }
+    return n;
+}
+
 static int ekzekuto_cmd(const char *cmd) {
     int ret = system(cmd);
     if (ret != 0)
