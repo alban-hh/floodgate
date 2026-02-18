@@ -3,6 +3,7 @@
 #include "stats.h"
 #include "sflow.h"
 #include "acl.h"
+#include "flowspec.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,7 @@ extern int bpf_set_link_xdp_fd(int ifindex, int fd, __u32 flags);
 
 static pthread_t sflow_thread;
 static pthread_t acl_thread;
+static pthread_t flowspec_thread;
 
 static int print_libbpf_log(enum libbpf_print_level lvl, const char *fmt, va_list args) {
     if (lvl == LIBBPF_DEBUG)
@@ -55,6 +57,7 @@ static void shfaq_perdorimi(const char *programi) {
     printf("  -b <file>         Blacklist file\n");
     printf("  -S <port>         sFlow port (default 6343)\n");
     printf("  -a                Aktivo ACL automatik\n");
+    printf("  -F                Aktivo Flowspec auto-redirect (BGP)\n");
     printf("  -C                Aktivo UDP challenge-response\n");
     printf("  -s <sec>          Shfaq statistika cdo X sekonda\n");
     printf("  -h                Shfaq ndihme\n\n");
@@ -86,7 +89,7 @@ int main(int argc, char **argv) {
     setlinebuf(stdout);
     libbpf_set_print(print_libbpf_log);
 
-    while ((opt = getopt(argc, argv, "i:p:t:u:c:P:B:Y:w:b:UTS:aCs:h")) != -1) {
+    while ((opt = getopt(argc, argv, "i:p:t:u:c:P:B:Y:w:b:UTS:aFCs:h")) != -1) {
         switch (opt) {
             case 'i': interface = optarg; break;
             case 'p': cfg.porta_target = atoi(optarg); break;
@@ -102,6 +105,7 @@ int main(int argc, char **argv) {
             case 'b': blacklist_fajlli = optarg; break;
             case 'S': sflow_porta = atoi(optarg); break;
             case 'a': acl_aktiv = 1; break;
+            case 'F': flowspec_aktiv = 1; break;
             case 'C': cfg.challenge_aktiv = 1; break;
             case 's': intervali_stat = atoi(optarg); break;
             case 'h': shfaq_perdorimi(argv[0]); return 0;
@@ -196,6 +200,7 @@ int main(int argc, char **argv) {
     if (cfg.limit_syn)    printf("SYN limit:     %llu pps\n", (unsigned long long)cfg.limit_syn);
     if (sflow_porta)      printf("sFlow:         port %d\n", sflow_porta);
     if (acl_aktiv)        printf("ACL:           aktiv\n");
+    if (flowspec_aktiv)   printf("Flowspec:      aktiv (BGP redirect)\n");
     if (cfg.challenge_aktiv) printf("Challenge:     aktiv (UDP)\n");
     printf("\n");
 
@@ -209,6 +214,17 @@ int main(int argc, char **argv) {
     if (acl_aktiv) {
         if (pthread_create(&acl_thread, NULL, acl_menaxher, NULL) != 0) {
             fprintf(stderr, "Gabim ne krijimin e ACL thread\n");
+            return 1;
+        }
+    }
+
+    if (flowspec_aktiv) {
+        if (sflow_porta <= 0) {
+            fprintf(stderr, "Gabim: Flowspec kerkon sFlow (-S port)\n");
+            return 1;
+        }
+        if (pthread_create(&flowspec_thread, NULL, flowspec_menaxher, NULL) != 0) {
+            fprintf(stderr, "Gabim ne krijimin e Flowspec thread\n");
             return 1;
         }
     }

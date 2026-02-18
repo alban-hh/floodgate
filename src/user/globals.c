@@ -14,6 +14,7 @@ struct bpf_object *obj = NULL;
 volatile int vazhdo = 1;
 
 struct sflow_hyrje sflow_tabela[SFLOW_TABELA_MADHESIA];
+struct sflow_hyrje sflow_tabela_dst[SFLOW_TABELA_MADHESIA];
 pthread_mutex_t sflow_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int sflow_porta = 0;
@@ -23,6 +24,13 @@ __u64 acl_pragu_bps = 100000000;
 __u32 acl_pragu_shkeljet = 10;
 __u32 acl_koha_bllokimit = 300;
 __u32 acl_intervali = 5;
+
+int flowspec_aktiv = 0;
+__u64 flowspec_pragu_bps = 10000000;
+__u64 flowspec_pragu_pastrim = 3000000;
+__u32 flowspec_koha_min = 180;
+__u32 flowspec_koha_stabile = 120;
+__u32 flowspec_intervali = 5;
 
 char acl_log[ACL_LOG_MAX][ACL_LOG_GJATESIA];
 int acl_log_idx = 0;

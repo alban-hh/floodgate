@@ -1,5 +1,6 @@
 #include "stats.h"
 #include "globals.h"
+#include "flowspec.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -120,6 +121,12 @@ void shfaq_dashboard(int max_top_ip) {
         P("    Dyshimte:       %-15d\n", nr_dyshimte);
         P("    Kufizuar:       %-15d\n", nr_kufizuar);
         P("    Auto-bllokuar:  %-15d\n", nr_auto_bl);
+    }
+
+    if (flowspec_aktiv) {
+        P("\n");
+        P("  \033[1;36mFLOWSPEC:\033[0m\n");
+        P("    Mitigime aktive: %-15d\n", flowspec_nr_aktiv());
     }
 
     P("\033[1;36m=================================================\033[0m\n");

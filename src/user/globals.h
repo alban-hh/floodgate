@@ -27,6 +27,7 @@ extern struct bpf_object *obj;
 extern volatile int vazhdo;
 
 extern struct sflow_hyrje sflow_tabela[];
+extern struct sflow_hyrje sflow_tabela_dst[];
 extern pthread_mutex_t sflow_mutex;
 
 extern int sflow_porta;
@@ -36,6 +37,13 @@ extern __u64 acl_pragu_bps;
 extern __u32 acl_pragu_shkeljet;
 extern __u32 acl_koha_bllokimit;
 extern __u32 acl_intervali;
+
+extern int flowspec_aktiv;
+extern __u64 flowspec_pragu_bps;
+extern __u64 flowspec_pragu_pastrim;
+extern __u32 flowspec_koha_min;
+extern __u32 flowspec_koha_stabile;
+extern __u32 flowspec_intervali;
 
 #define ACL_LOG_MAX 8
 #define ACL_LOG_GJATESIA 160

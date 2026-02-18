@@ -61,6 +61,25 @@ static void sflow_regjistro(__u32 ip, __u32 frame_len, __u32 sampling_rate) {
     pthread_mutex_unlock(&sflow_mutex);
 }
 
+static void sflow_regjistro_dst(__u32 ip, __u32 frame_len, __u32 sampling_rate) {
+    __u32 idx = sflow_hash(ip);
+
+    pthread_mutex_lock(&sflow_mutex);
+
+    for (int i = 0; i < 64; i++) {
+        __u32 pos = (idx + i) & (SFLOW_TABELA_MADHESIA - 1);
+        if (!sflow_tabela_dst[pos].aktiv || sflow_tabela_dst[pos].ip == ip) {
+            sflow_tabela_dst[pos].ip = ip;
+            sflow_tabela_dst[pos].paketa += sampling_rate;
+            sflow_tabela_dst[pos].bytes += (__u64)frame_len * sampling_rate;
+            sflow_tabela_dst[pos].aktiv = 1;
+            break;
+        }
+    }
+
+    pthread_mutex_unlock(&sflow_mutex);
+}
+
 static void proceso_raw_header(const __u8 *hdr, int hdr_len, __u32 frame_len, __u32 sampling_rate) {
     if (hdr_len < 14)
         return;
@@ -89,7 +108,11 @@ static void proceso_raw_header(const __u8 *hdr, int hdr_len, __u32 frame_len, __
     __u32 ip_burimi;
     memcpy(&ip_burimi, ip_hdr + 12, 4);
 
+    __u32 ip_destinacioni;
+    memcpy(&ip_destinacioni, ip_hdr + 16, 4);
+
     sflow_regjistro(ip_burimi, frame_len, sampling_rate);
+    sflow_regjistro_dst(ip_destinacioni, frame_len, sampling_rate);
 }
 
 static void proceso_flow_records(struct sflow_kursor *k, __u32 num_records, __u32 sampling_rate) {

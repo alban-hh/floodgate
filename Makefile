@@ -11,7 +11,8 @@ USER_SRCS = src/user/main.c \
             src/user/config.c \
             src/user/stats.c \
             src/user/sflow.c \
-            src/user/acl.c
+            src/user/acl.c \
+            src/user/flowspec.c
 
 USER_OBJS = $(patsubst src/user/%.c,build/%.o,$(USER_SRCS))
 
