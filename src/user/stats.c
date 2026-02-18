@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+#define BUF_MAX 16384
+#define P(...) pos += snprintf(buf + pos, BUF_MAX - pos, __VA_ARGS__)
+
 static void formato_bytes(char *buf, size_t len, __u64 bytes) {
     if (bytes >= 1000000000ULL)
         snprintf(buf, len, "%.2f GB", (double)bytes / 1000000000.0);
@@ -39,11 +42,8 @@ static const char *emri_nivelit(__u32 niveli) {
 }
 
 void shfaq_dashboard(int max_top_ip) {
-    static int linja_para = 0;
-
-    if (linja_para > 0)
-        printf("\033[%dA\033[J", linja_para);
-    int L = 0;
+    char buf[BUF_MAX];
+    int pos = 0;
 
     int nr_cpu = libbpf_num_possible_cpus();
     if (nr_cpu < 1) nr_cpu = 1;
@@ -65,28 +65,28 @@ void shfaq_dashboard(int max_top_ip) {
     formato_bytes(buf_bytes_bl, sizeof(buf_bytes_bl), vlerat[11]);
     formato_numri(buf_total, sizeof(buf_total), vlerat[8]);
 
-    printf("\033[1;36m============= FloodGate Statistika =============\033[0m\n"); L++;
-    printf("\033[1;33m  Total paketa:     %-15s\033[0m\n", buf_total); L++;
-    printf("\n"); L++;
-    printf("  \033[1;32mLEJUAR:\033[0m\n"); L++;
-    printf("    TCP:            %-15llu\n", (unsigned long long)vlerat[0]); L++;
-    printf("    UDP:            %-15llu\n", (unsigned long long)vlerat[1]); L++;
-    printf("    ICMP:           %-15llu\n", (unsigned long long)vlerat[2]); L++;
-    printf("    Bytes:          %-15s\n", buf_bytes_lej); L++;
-    printf("\n"); L++;
-    printf("  \033[1;31mBLLOKUAR:\033[0m\n"); L++;
-    printf("    TCP:            %-15llu\n", (unsigned long long)vlerat[3]); L++;
-    printf("    UDP:            %-15llu\n", (unsigned long long)vlerat[4]); L++;
-    printf("    ICMP:           %-15llu\n", (unsigned long long)vlerat[5]); L++;
-    printf("    Blacklist:      %-15llu\n", (unsigned long long)vlerat[6]); L++;
-    printf("    Auto-block:     %-15llu\n", (unsigned long long)vlerat[7]); L++;
-    printf("    SYN flood:      %-15llu\n", (unsigned long long)vlerat[9]); L++;
-    printf("    Bytes:          %-15s\n", buf_bytes_bl); L++;
-
-    printf("\n"); L++;
-    printf("  \033[1;34mCHALLENGE:\033[0m\n"); L++;
-    printf("    Derguar:        %-15llu\n", (unsigned long long)vlerat[12]); L++;
-    printf("    Verifikuar:     %-15llu\n", (unsigned long long)vlerat[13]); L++;
+    P("\033[H\033[?25l");
+    P("\033[1;36m============= FloodGate Statistika =============\033[0m\033[K\n");
+    P("\033[1;33m  Total paketa:     %-15s\033[0m\033[K\n", buf_total);
+    P("\033[K\n");
+    P("  \033[1;32mLEJUAR:\033[0m\033[K\n");
+    P("    TCP:            %-15llu\033[K\n", (unsigned long long)vlerat[0]);
+    P("    UDP:            %-15llu\033[K\n", (unsigned long long)vlerat[1]);
+    P("    ICMP:           %-15llu\033[K\n", (unsigned long long)vlerat[2]);
+    P("    Bytes:          %-15s\033[K\n", buf_bytes_lej);
+    P("\033[K\n");
+    P("  \033[1;31mBLLOKUAR:\033[0m\033[K\n");
+    P("    TCP:            %-15llu\033[K\n", (unsigned long long)vlerat[3]);
+    P("    UDP:            %-15llu\033[K\n", (unsigned long long)vlerat[4]);
+    P("    ICMP:           %-15llu\033[K\n", (unsigned long long)vlerat[5]);
+    P("    Blacklist:      %-15llu\033[K\n", (unsigned long long)vlerat[6]);
+    P("    Auto-block:     %-15llu\033[K\n", (unsigned long long)vlerat[7]);
+    P("    SYN flood:      %-15llu\033[K\n", (unsigned long long)vlerat[9]);
+    P("    Bytes:          %-15s\033[K\n", buf_bytes_bl);
+    P("\033[K\n");
+    P("  \033[1;34mCHALLENGE:\033[0m\033[K\n");
+    P("    Derguar:        %-15llu\033[K\n", (unsigned long long)vlerat[12]);
+    P("    Verifikuar:     %-15llu\033[K\n", (unsigned long long)vlerat[13]);
 
     if (acl_aktiv || sflow_porta > 0) {
         int nr_bllokuar = 0;
@@ -114,15 +114,15 @@ void shfaq_dashboard(int max_top_ip) {
             ret = bpf_map_get_next_key(fd_harta_ip, &prev, &ip_key);
         }
 
-        printf("\n"); L++;
-        printf("  \033[1;35mACL:\033[0m\n"); L++;
-        printf("    Blacklist:      %-15d\n", nr_bllokuar); L++;
-        printf("    Dyshimte:       %-15d\n", nr_dyshimte); L++;
-        printf("    Kufizuar:       %-15d\n", nr_kufizuar); L++;
-        printf("    Auto-bllokuar:  %-15d\n", nr_auto_bl); L++;
+        P("\033[K\n");
+        P("  \033[1;35mACL:\033[0m\033[K\n");
+        P("    Blacklist:      %-15d\033[K\n", nr_bllokuar);
+        P("    Dyshimte:       %-15d\033[K\n", nr_dyshimte);
+        P("    Kufizuar:       %-15d\033[K\n", nr_kufizuar);
+        P("    Auto-bllokuar:  %-15d\033[K\n", nr_auto_bl);
     }
 
-    printf("\033[1;36m=================================================\033[0m\n"); L++;
+    P("\033[1;36m=================================================\033[0m\033[K\n");
 
     struct ip_renditje {
         __u32 ip;
@@ -177,9 +177,9 @@ void shfaq_dashboard(int max_top_ip) {
         nr_top = max_top_ip;
 
     if (nr_top > 0) {
-        printf("\n"); L++;
-        printf("\033[1;33m  TOP %d IP:\033[0m\n", nr_top); L++;
-        printf("    %-18s %-12s %-12s %-10s\n", "IP", "PPS", "NIVELI", "SHKELJET"); L++;
+        P("\033[K\n");
+        P("\033[1;33m  TOP %d IP:\033[0m\033[K\n", nr_top);
+        P("    %-18s %-12s %-12s %-10s\033[K\n", "IP", "PPS", "NIVELI", "SHKELJET");
         for (int i = 0; i < nr_top; i++) {
             struct in_addr a;
             a.s_addr = top[i].ip;
@@ -196,14 +196,28 @@ void shfaq_dashboard(int max_top_ip) {
             else
                 ngjyra = "\033[0;32m";
 
-            printf("    %-18s %-12s %s%-12s\033[0m %-10u\n",
+            P("    %-18s %-12s %s%-12s\033[0m %-10u\033[K\n",
                    inet_ntoa(a), pps_buf,
                    ngjyra, emri_nivelit(top[i].niveli),
                    top[i].shkeljet);
-            L++;
         }
     }
 
-    linja_para = L;
+    pthread_mutex_lock(&acl_log_mutex);
+    if (acl_log_nr > 0) {
+        P("\033[K\n");
+        P("  \033[1;35mACL LOG:\033[0m\033[K\n");
+        int fillimi = (acl_log_nr >= ACL_LOG_MAX) ? acl_log_idx : 0;
+        int sa = (acl_log_nr < ACL_LOG_MAX) ? acl_log_nr : ACL_LOG_MAX;
+        for (int i = 0; i < sa; i++) {
+            int idx = (fillimi + i) % ACL_LOG_MAX;
+            P("    %s\033[K\n", acl_log[idx]);
+        }
+    }
+    pthread_mutex_unlock(&acl_log_mutex);
+
+    P("\033[J");
+
+    fwrite(buf, 1, pos, stdout);
     fflush(stdout);
 }

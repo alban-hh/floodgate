@@ -37,4 +37,12 @@ extern __u32 acl_pragu_shkeljet;
 extern __u32 acl_koha_bllokimit;
 extern __u32 acl_intervali;
 
+#define ACL_LOG_MAX 8
+#define ACL_LOG_GJATESIA 160
+extern char acl_log[ACL_LOG_MAX][ACL_LOG_GJATESIA];
+extern int acl_log_idx;
+extern int acl_log_nr;
+extern pthread_mutex_t acl_log_mutex;
+void acl_log_shto(const char *fmt, ...);
+
 #endif

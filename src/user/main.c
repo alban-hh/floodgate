@@ -33,7 +33,7 @@ static void pastrimi(int sig) {
     if (obj)
         bpf_object__close(obj);
 
-    printf("\nFloodGate ndalur\n");
+    printf("\033[?25h\nFloodGate ndalur\n");
     _exit(0);
 }
 

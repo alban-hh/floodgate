@@ -36,7 +36,7 @@ void *acl_menaxher(void *arg) {
 
                 struct in_addr a;
                 a.s_addr = ip;
-                printf("[ACL-SFLOW] +BLOCK %s (pps:%llu bps:%llu)\n",
+                acl_log_shto("[ACL-SFLOW] +BLOCK %s (pps:%llu bps:%llu)",
                        inet_ntoa(a), (unsigned long long)pps, (unsigned long long)bps);
             }
         }
@@ -62,7 +62,7 @@ void *acl_menaxher(void *arg) {
 
                     struct in_addr a;
                     a.s_addr = ip_key;
-                    printf("[ACL-XDP] +BLOCK %s (shkeljet:%u)\n",
+                    acl_log_shto("[ACL-XDP] +BLOCK %s (shkeljet:%u)",
                            inet_ntoa(a), rregull.shkeljet);
                 }
             }
@@ -95,13 +95,11 @@ void *acl_menaxher(void *arg) {
 
             struct in_addr a;
             a.s_addr = per_fshirje[i];
-            printf("[ACL] -UNBLOCK %s (TTL skaduar)\n", inet_ntoa(a));
+            acl_log_shto("[ACL] -UNBLOCK %s (TTL skaduar)", inet_ntoa(a));
         }
 
-        if (bllokime_reja > 0 || zhbllokime > 0) {
-            printf("[ACL] cikli: +%d bllokime, -%d zhbllokime\n", bllokime_reja, zhbllokime);
-            fflush(stdout);
-        }
+        if (bllokime_reja > 0 || zhbllokime > 0)
+            acl_log_shto("[ACL] cikli: +%d bllokime, -%d zhbllokime", bllokime_reja, zhbllokime);
     }
 
     return NULL;
