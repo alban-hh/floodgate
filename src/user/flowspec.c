@@ -192,8 +192,7 @@ void *flowspec_menaxher(void *arg) {
                     }
                 }
                 if (!gjetur) {
-                    if (lista[i].koha_nen_prag == 0)
-                        lista[i].koha_nen_prag = koha_tani;
+                    lista[i].koha_nen_prag = koha_tani;
                 }
                 continue;
             }

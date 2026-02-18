@@ -28,15 +28,6 @@ static int print_libbpf_log(enum libbpf_print_level lvl, const char *fmt, va_lis
 
 static void pastrimi(int sig) {
     vazhdo = 0;
-
-    if (ifindex > 0)
-        bpf_set_link_xdp_fd(ifindex, -1, XDP_FLAGS_UPDATE_IF_NOEXIST);
-
-    if (obj)
-        bpf_object__close(obj);
-
-    printf("\033[?25h\nFloodGate ndalur\n");
-    _exit(0);
 }
 
 static void shfaq_perdorimi(const char *programi) {
@@ -243,5 +234,17 @@ int main(int argc, char **argv) {
         }
     }
 
+    printf("\033[?25h\n");
+
+    if (flowspec_aktiv)
+        pthread_join(flowspec_thread, NULL);
+
+    if (ifindex > 0)
+        bpf_set_link_xdp_fd(ifindex, -1, XDP_FLAGS_UPDATE_IF_NOEXIST);
+
+    if (obj)
+        bpf_object__close(obj);
+
+    printf("FloodGate ndalur\n");
     return 0;
 }
