@@ -139,10 +139,10 @@ void shfaq_dashboard(int max_top_ip) {
             __u64 min = sekonda / 60;
             __u64 sek = sekonda % 60;
             if (fs_lista[i].mode == FLOWSPEC_MODE_BLACKHOLE) {
-                P("    \033[1;31m>> %-18s  BLACKHOLE (discard)          (%llum%llus)\033[0m\n",
+                P("    \033[1;31m>> %-18s  BLACKHOLE (RTBH 65001:666)   (%llum%llus)\033[0m\n",
                     inet_ntoa(a), (unsigned long long)min, (unsigned long long)sek);
             } else {
-                P("    \033[1;33m>> %-18s  redirect -> 192.168.50.101   (%llum%llus)\033[0m\n",
+                P("    \033[1;33m>> %-18s  REDIRECT (RT 666:666)        (%llum%llus)\033[0m\n",
                     inet_ntoa(a), (unsigned long long)min, (unsigned long long)sek);
             }
         }
