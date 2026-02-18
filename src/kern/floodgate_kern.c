@@ -292,6 +292,31 @@ int floodgate_filter(struct xdp_md *ctx) {
     __u16 gjatesia_pkt = bpf_ntohs(ip->tot_len);
     __u8 eshte_syn = 0;
 
+    {
+        __u32 ck = 0;
+        struct konfigurimi *c = bpf_map_lookup_elem(&harta_config, &ck);
+        if (c) {
+            if (protokoll == IPPROTO_UDP && c->bloko_udp) {
+                __u8 *wl = bpf_map_lookup_elem(&harta_whitelist, &ip_burimi);
+                if (!wl) {
+                    ndrysho_stat(8, 1);
+                    ndrysho_stat(4, 1);
+                    ndrysho_stat(11, gjatesia_pkt);
+                    return XDP_DROP;
+                }
+            }
+            if (protokoll == IPPROTO_TCP && c->bloko_tcp) {
+                __u8 *wl = bpf_map_lookup_elem(&harta_whitelist, &ip_burimi);
+                if (!wl) {
+                    ndrysho_stat(8, 1);
+                    ndrysho_stat(3, 1);
+                    ndrysho_stat(11, gjatesia_pkt);
+                    return XDP_DROP;
+                }
+            }
+        }
+    }
+
     void *l4 = (void *)ip + sizeof(struct iphdr);
 
     if (protokoll == IPPROTO_TCP) {
