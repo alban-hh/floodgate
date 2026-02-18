@@ -1,10 +1,10 @@
 [Unit]
-Description=FloodGate XDP Traffic Scrubber + sFlow ACL
-After=network.target
+Description=FloodGate XDP Traffic Scrubber + sFlow ACL + BGP Flowspec
+After=network.target gobgpd.service
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/floodgate -i vlan50 -t 10000 -u 5000 -c 100 -Y 500 -S 6343 -a -w /etc/floodgate/whitelist.txt -s 10
+ExecStart=/usr/local/bin/floodgate -i vlan50 -t 10000 -u 5000 -c 100 -Y 500 -S 6343 -a -F -C -w /etc/floodgate/whitelist.txt -s 5
 WorkingDirectory=/usr/local/lib
 Restart=on-failure
 RestartSec=5
