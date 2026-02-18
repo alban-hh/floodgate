@@ -121,7 +121,7 @@ void *flowspec_menaxher(void *arg) {
                 continue;
 
             __u32 ip = snapshot[i].ip;
-            __u64 bps = snapshot[i].bytes / flowspec_intervali;
+            __u64 bps = (snapshot[i].bytes / flowspec_intervali) * 8;
             int idx = gjej_mitigim(ip);
 
             if (bps >= flowspec_pragu_blackhole) {
