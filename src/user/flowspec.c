@@ -43,16 +43,23 @@ static int ekzekuto_cmd(const char *cmd) {
     return ret;
 }
 
-static void fshi_rregull(__u32 ip) {
+static void fshi_rregull(__u32 ip, int mode) {
     struct in_addr a;
     a.s_addr = ip;
     char cmd[256];
-    snprintf(cmd, sizeof(cmd),
-        "gobgp global rib -a ipv4-flowspec del "
-        "match destination %s/32",
-        inet_ntoa(a));
+    if (mode == FLOWSPEC_MODE_BLACKHOLE) {
+        snprintf(cmd, sizeof(cmd),
+            "gobgp global rib del %s/32",
+            inet_ntoa(a));
+    } else {
+        snprintf(cmd, sizeof(cmd),
+            "gobgp global rib -a ipv4-flowspec del "
+            "match destination %s/32",
+            inet_ntoa(a));
+    }
     if (ekzekuto_cmd(cmd) == 0) {
-        acl_log_shto("[FLOWSPEC] -REMOVE %s", inet_ntoa(a));
+        acl_log_shto("[FLOWSPEC] -REMOVE %s (%s)", inet_ntoa(a),
+            mode == FLOWSPEC_MODE_BLACKHOLE ? "RTBH" : "redirect");
     }
 }
 
@@ -62,10 +69,10 @@ static void shto_redirect(__u32 ip) {
     char cmd[256];
     snprintf(cmd, sizeof(cmd),
         "gobgp global rib -a ipv4-flowspec add "
-        "match destination %s/32 then redirect 192.168.50.101:0",
+        "match destination %s/32 then redirect 666:666",
         inet_ntoa(a));
     if (ekzekuto_cmd(cmd) == 0) {
-        acl_log_shto("[FLOWSPEC] +REDIRECT %s -> 192.168.50.101", inet_ntoa(a));
+        acl_log_shto("[FLOWSPEC] +REDIRECT %s (RT 666:666)", inet_ntoa(a));
     }
 }
 
@@ -74,11 +81,10 @@ static void shto_blackhole(__u32 ip) {
     a.s_addr = ip;
     char cmd[256];
     snprintf(cmd, sizeof(cmd),
-        "gobgp global rib -a ipv4-flowspec add "
-        "match destination %s/32 then discard",
+        "gobgp global rib add %s/32 community 65001:666",
         inet_ntoa(a));
     if (ekzekuto_cmd(cmd) == 0) {
-        acl_log_shto("[FLOWSPEC] +BLACKHOLE %s (discard)", inet_ntoa(a));
+        acl_log_shto("[FLOWSPEC] +BLACKHOLE %s (RTBH community 65001:666)", inet_ntoa(a));
     }
 }
 
@@ -136,7 +142,7 @@ void *flowspec_menaxher(void *arg) {
                     lista[slot].mode = FLOWSPEC_MODE_BLACKHOLE;
                     nr_aktiv++;
                 } else if (lista[idx].mode == FLOWSPEC_MODE_REDIRECT) {
-                    fshi_rregull(ip);
+                    fshi_rregull(ip, FLOWSPEC_MODE_REDIRECT);
                     shto_blackhole(ip);
                     lista[idx].mode = FLOWSPEC_MODE_BLACKHOLE;
                     lista[idx].koha_nen_prag = 0;
@@ -157,7 +163,7 @@ void *flowspec_menaxher(void *arg) {
                     lista[slot].mode = FLOWSPEC_MODE_REDIRECT;
                     nr_aktiv++;
                 } else if (lista[idx].mode == FLOWSPEC_MODE_BLACKHOLE) {
-                    fshi_rregull(ip);
+                    fshi_rregull(ip, FLOWSPEC_MODE_BLACKHOLE);
                     shto_redirect(ip);
                     lista[idx].mode = FLOWSPEC_MODE_REDIRECT;
                     lista[idx].koha_nen_prag = 0;
@@ -199,7 +205,7 @@ void *flowspec_menaxher(void *arg) {
 
             __u64 koha_stabile = koha_tani - lista[i].koha_nen_prag;
             if (koha_stabile >= flowspec_koha_stabile) {
-                fshi_rregull(lista[i].ip);
+                fshi_rregull(lista[i].ip, lista[i].mode);
                 lista[i].aktiv = 0;
                 nr_aktiv--;
             }
@@ -208,7 +214,7 @@ void *flowspec_menaxher(void *arg) {
 
     for (int i = 0; i < FLOWSPEC_MAX_MITIGIME; i++) {
         if (lista[i].aktiv) {
-            fshi_rregull(lista[i].ip);
+            fshi_rregull(lista[i].ip, lista[i].mode);
             lista[i].aktiv = 0;
             nr_aktiv--;
         }
