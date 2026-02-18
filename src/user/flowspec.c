@@ -34,7 +34,7 @@ static void shto_rregull(__u32 ip) {
     char cmd[256];
     snprintf(cmd, sizeof(cmd),
         "gobgp global rib -a ipv4-flowspec add "
-        "match destination %s/32 then redirect-ip 192.168.50.101",
+        "match destination %s/32 then redirect 192.168.50.101:0",
         inet_ntoa(a));
     if (ekzekuto_cmd(cmd) == 0) {
         acl_log_shto("[FLOWSPEC] +REDIRECT %s -> 192.168.50.101", inet_ntoa(a));
