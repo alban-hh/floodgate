@@ -177,7 +177,7 @@ static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u1
 
     if (eshte_syn && cfg->limit_syn && rregull->numrues_paketa > cfg->limit_syn) {
         rregull->shkeljet++;
-        if (rregull->shkeljet > 10 && rregull->niveli < NIVELI_BLLOKUAR) {
+        if (rregull->shkeljet > 20 && rregull->niveli < NIVELI_BLLOKUAR) {
             rregull->niveli++;
             rregull->koha_nivelit = koha_tani;
         }
@@ -206,7 +206,7 @@ static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u1
 
     if (cfg->limit_pps && rregull->numrues_paketa > cfg->limit_pps) {
         rregull->shkeljet++;
-        if (rregull->shkeljet > 5 && rregull->niveli < NIVELI_BLLOKUAR) {
+        if (rregull->shkeljet > 15 && rregull->niveli < NIVELI_BLLOKUAR) {
             rregull->niveli++;
             rregull->koha_nivelit = koha_tani;
         }
@@ -218,17 +218,17 @@ static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u1
     if (limit && rregull->numrues_paketa > limit) {
         rregull->shkeljet++;
 
-        if (rregull->numrues_paketa > limit * 3) {
+        if (rregull->numrues_paketa > limit * 6) {
             if (rregull->niveli < NIVELI_BLLOKUAR) {
                 rregull->niveli = NIVELI_BLLOKUAR;
                 rregull->koha_nivelit = koha_tani;
             }
-        } else if (rregull->numrues_paketa > limit * 2) {
+        } else if (rregull->numrues_paketa > limit * 4) {
             if (rregull->niveli < NIVELI_KUFIZUAR) {
                 rregull->niveli = NIVELI_KUFIZUAR;
                 rregull->koha_nivelit = koha_tani;
             }
-        } else {
+        } else if (rregull->numrues_paketa > limit * 2) {
             if (rregull->niveli < NIVELI_DYSHIMTE) {
                 rregull->niveli = NIVELI_DYSHIMTE;
                 rregull->koha_nivelit = koha_tani;
@@ -339,6 +339,10 @@ int floodgate_filter(struct xdp_md *ctx) {
             if (bpf_map_lookup_elem(&harta_bllokuar, &ip_burimi))
                 goto skip_challenge;
             if (bpf_map_lookup_elem(&harta_whitelist, &ip_burimi))
+                goto skip_challenge;
+
+            struct rregull_trafikut *rr = bpf_map_lookup_elem(&harta_ip, &ip_burimi);
+            if (!rr || rr->niveli < NIVELI_DYSHIMTE)
                 goto skip_challenge;
 
             __u64 *ver_ts = bpf_map_lookup_elem(&harta_verifikuar, &ip_burimi);

@@ -26,8 +26,8 @@ __u32 acl_koha_bllokimit = 300;
 __u32 acl_intervali = 5;
 
 int flowspec_aktiv = 0;
-__u64 flowspec_pragu_bps = 10000000;
-__u64 flowspec_pragu_pastrim = 3000000;
+__u64 flowspec_pragu_bps = 100000000;
+__u64 flowspec_pragu_pastrim = 30000000;
 __u64 flowspec_pragu_blackhole = 900000000;
 __u32 flowspec_koha_min = 180;
 __u32 flowspec_koha_stabile = 120;
