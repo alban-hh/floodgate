@@ -341,10 +341,6 @@ int floodgate_filter(struct xdp_md *ctx) {
             if (bpf_map_lookup_elem(&harta_whitelist, &ip_burimi))
                 goto skip_challenge;
 
-            struct rregull_trafikut *rr = bpf_map_lookup_elem(&harta_ip, &ip_burimi);
-            if (!rr || rr->niveli < NIVELI_DYSHIMTE)
-                goto skip_challenge;
-
             __u64 *ver_ts = bpf_map_lookup_elem(&harta_verifikuar, &ip_burimi);
             if (ver_ts) {
                 __u64 tani = bpf_ktime_get_ns();
