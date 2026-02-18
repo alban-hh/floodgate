@@ -121,6 +121,18 @@ static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u1
     if (!cfg || !cfg->aktiv)
         return XDP_PASS;
 
+    if (protokoll == IPPROTO_UDP && cfg->bloko_udp) {
+        ndrysho_stat(4, 1);
+        ndrysho_stat(11, gjatesia_pkt);
+        return XDP_DROP;
+    }
+
+    if (protokoll == IPPROTO_TCP && cfg->bloko_tcp) {
+        ndrysho_stat(3, 1);
+        ndrysho_stat(11, gjatesia_pkt);
+        return XDP_DROP;
+    }
+
     if (cfg->porta_target && porta_dest != cfg->porta_target)
         return XDP_PASS;
 
@@ -162,18 +174,6 @@ static __always_inline int procezo_paketen(__u32 ip_burimi, __u8 protokoll, __u1
 
     rregull->numrues_paketa++;
     rregull->bytes_totale += gjatesia_pkt;
-
-    if (protokoll == IPPROTO_TCP && cfg->bloko_tcp) {
-        ndrysho_stat(3, 1);
-        ndrysho_stat(11, gjatesia_pkt);
-        return XDP_DROP;
-    }
-
-    if (protokoll == IPPROTO_UDP && cfg->bloko_udp) {
-        ndrysho_stat(4, 1);
-        ndrysho_stat(11, gjatesia_pkt);
-        return XDP_DROP;
-    }
 
     if (eshte_syn && cfg->limit_syn && rregull->numrues_paketa > cfg->limit_syn) {
         rregull->shkeljet++;
