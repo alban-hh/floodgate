@@ -41,6 +41,7 @@ extern __u32 acl_intervali;
 extern int flowspec_aktiv;
 extern __u64 flowspec_pragu_bps;
 extern __u64 flowspec_pragu_pastrim;
+extern __u64 flowspec_pragu_blackhole;
 extern __u32 flowspec_koha_min;
 extern __u32 flowspec_koha_stabile;
 extern __u32 flowspec_intervali;

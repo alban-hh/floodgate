@@ -12,6 +12,7 @@ struct mitigimi {
     __u64 koha_fillimit;
     __u64 koha_nen_prag;
     int aktiv;
+    int mode;
 };
 
 static struct mitigimi lista[FLOWSPEC_MAX_MITIGIME];
@@ -28,6 +29,7 @@ int flowspec_merr_listen(struct flowspec_info *dst, int max) {
             dst[n].ip = lista[i].ip;
             dst[n].koha_fillimit = lista[i].koha_fillimit;
             dst[n].aktiv = 1;
+            dst[n].mode = lista[i].mode;
             n++;
         }
     }
@@ -41,7 +43,20 @@ static int ekzekuto_cmd(const char *cmd) {
     return ret;
 }
 
-static void shto_rregull(__u32 ip) {
+static void fshi_rregull(__u32 ip) {
+    struct in_addr a;
+    a.s_addr = ip;
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd),
+        "gobgp global rib -a ipv4-flowspec del "
+        "match destination %s/32",
+        inet_ntoa(a));
+    if (ekzekuto_cmd(cmd) == 0) {
+        acl_log_shto("[FLOWSPEC] -REMOVE %s", inet_ntoa(a));
+    }
+}
+
+static void shto_redirect(__u32 ip) {
     struct in_addr a;
     a.s_addr = ip;
     char cmd[256];
@@ -54,16 +69,16 @@ static void shto_rregull(__u32 ip) {
     }
 }
 
-static void fshi_rregull(__u32 ip) {
+static void shto_blackhole(__u32 ip) {
     struct in_addr a;
     a.s_addr = ip;
     char cmd[256];
     snprintf(cmd, sizeof(cmd),
-        "gobgp global rib -a ipv4-flowspec del "
-        "match destination %s/32",
+        "gobgp global rib -a ipv4-flowspec add "
+        "match destination %s/32 then discard",
         inet_ntoa(a));
     if (ekzekuto_cmd(cmd) == 0) {
-        acl_log_shto("[FLOWSPEC] -REMOVE %s", inet_ntoa(a));
+        acl_log_shto("[FLOWSPEC] +BLACKHOLE %s (discard)", inet_ntoa(a));
     }
 }
 
@@ -84,8 +99,9 @@ static int gjej_slot_lire(void) {
 }
 
 void *flowspec_menaxher(void *arg) {
-    printf("Flowspec menaxher aktiv (intervali: %ds, pragu: %llu bps)\n",
-           flowspec_intervali, (unsigned long long)flowspec_pragu_bps);
+    printf("Flowspec menaxher aktiv (intervali: %ds, pragu: %llu bps, blackhole: %llu bps)\n",
+           flowspec_intervali, (unsigned long long)flowspec_pragu_bps,
+           (unsigned long long)flowspec_pragu_blackhole);
 
     struct sflow_hyrje snapshot[SFLOW_TABELA_MADHESIA];
 
@@ -108,17 +124,45 @@ void *flowspec_menaxher(void *arg) {
             __u64 bps = snapshot[i].bytes / flowspec_intervali;
             int idx = gjej_mitigim(ip);
 
-            if (bps >= flowspec_pragu_bps) {
+            if (bps >= flowspec_pragu_blackhole) {
                 if (idx < 0) {
                     int slot = gjej_slot_lire();
                     if (slot < 0) continue;
-
-                    shto_rregull(ip);
+                    shto_blackhole(ip);
                     lista[slot].ip = ip;
                     lista[slot].koha_fillimit = koha_tani;
                     lista[slot].koha_nen_prag = 0;
                     lista[slot].aktiv = 1;
+                    lista[slot].mode = FLOWSPEC_MODE_BLACKHOLE;
                     nr_aktiv++;
+                } else if (lista[idx].mode == FLOWSPEC_MODE_REDIRECT) {
+                    fshi_rregull(ip);
+                    shto_blackhole(ip);
+                    lista[idx].mode = FLOWSPEC_MODE_BLACKHOLE;
+                    lista[idx].koha_nen_prag = 0;
+                    acl_log_shto("[FLOWSPEC] ESCALATE %s redirect -> blackhole",
+                        inet_ntoa((struct in_addr){.s_addr = ip}));
+                } else {
+                    lista[idx].koha_nen_prag = 0;
+                }
+            } else if (bps >= flowspec_pragu_bps) {
+                if (idx < 0) {
+                    int slot = gjej_slot_lire();
+                    if (slot < 0) continue;
+                    shto_redirect(ip);
+                    lista[slot].ip = ip;
+                    lista[slot].koha_fillimit = koha_tani;
+                    lista[slot].koha_nen_prag = 0;
+                    lista[slot].aktiv = 1;
+                    lista[slot].mode = FLOWSPEC_MODE_REDIRECT;
+                    nr_aktiv++;
+                } else if (lista[idx].mode == FLOWSPEC_MODE_BLACKHOLE) {
+                    fshi_rregull(ip);
+                    shto_redirect(ip);
+                    lista[idx].mode = FLOWSPEC_MODE_REDIRECT;
+                    lista[idx].koha_nen_prag = 0;
+                    acl_log_shto("[FLOWSPEC] DE-ESCALATE %s blackhole -> redirect",
+                        inet_ntoa((struct in_addr){.s_addr = ip}));
                 } else {
                     lista[idx].koha_nen_prag = 0;
                 }
