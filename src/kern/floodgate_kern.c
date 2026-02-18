@@ -255,10 +255,24 @@ int floodgate_filter(struct xdp_md *ctx) {
     if ((void *)(eth + 1) > data_end)
         return XDP_PASS;
 
-    if (eth->h_proto != bpf_htons(ETH_P_IP))
+    __u16 h_proto = eth->h_proto;
+    void *nh = (void *)(eth + 1);
+
+    if (h_proto == bpf_htons(ETH_P_8021Q) || h_proto == bpf_htons(0x88a8)) {
+        struct vlan_hdr {
+            __u16 tci;
+            __u16 inner_proto;
+        } *vhdr = nh;
+        if ((void *)(vhdr + 1) > data_end)
+            return XDP_PASS;
+        h_proto = vhdr->inner_proto;
+        nh = (void *)(vhdr + 1);
+    }
+
+    if (h_proto != bpf_htons(ETH_P_IP))
         return XDP_PASS;
 
-    struct iphdr *ip = (void *)(eth + 1);
+    struct iphdr *ip = nh;
     if ((void *)(ip + 1) > data_end)
         return XDP_PASS;
 
