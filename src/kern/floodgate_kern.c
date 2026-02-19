@@ -363,8 +363,11 @@ int floodgate_filter(struct xdp_md *ctx) {
                 }
             }
 
-            if (ip->ihl != 5)
-                goto skip_challenge;
+            if (ip->ihl != 5) {
+                ndrysho_stat(14, 1);
+                ndrysho_stat(11, gjatesia_pkt);
+                return XDP_DROP;
+            }
 
             __u32 cookie = bpf_get_prandom_u32();
             struct challenge_hyrje new_ch = {};

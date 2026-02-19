@@ -84,6 +84,7 @@ void shfaq_dashboard(int max_top_ip) {
     P("    Blacklist:      %-15llu\n", (unsigned long long)vlerat[6]);
     P("    Auto-block:     %-15llu\n", (unsigned long long)vlerat[7]);
     P("    SYN flood:      %-15llu\n", (unsigned long long)vlerat[9]);
+    P("    IP-options:     %-15llu\n", (unsigned long long)vlerat[14]);
     P("    Bytes:          %-15s\n", buf_bytes_bl);
     P("\n");
     P("  \033[1;34mCHALLENGE:\033[0m\n");

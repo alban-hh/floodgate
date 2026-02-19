@@ -48,6 +48,8 @@ install: all
 	mkdir -p /etc/floodgate
 	test -f /etc/floodgate/whitelist.txt || install -m 0644 config/whitelist.txt /etc/floodgate/
 	install -m 0644 config/floodgate.service /etc/systemd/system/
+	install -m 0644 config/99-floodgate-sysctl.conf /etc/sysctl.d/99-floodgate.conf
+	sysctl --system 2>/dev/null || true
 	systemctl daemon-reload
 
 uninstall:
